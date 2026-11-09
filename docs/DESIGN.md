@@ -1,92 +1,94 @@
 # Mawrid — Design (v2)
 
-> v2 replaces v1 after the [design review](reviews/2026-11-design-review-v1.md). Decisions with lasting impact are recorded as [ADRs](adr/README.md). Domain terms are defined in the [glossary](GLOSSARY.md).
+> v2 replaces v1 after the [design review](reviews/2026-11-design-review-v1.md). Important decisions are in the [ADRs](adr/README.md). Domain words are explained in the [glossary](GLOSSARY.md).
 
 ## 1. Context
 
-Mid-size companies in Saudi Arabia still run a large share of their purchasing through email, WhatsApp and spreadsheets:
+Many mid-size companies in Saudi Arabia still buy things using email, WhatsApp and spreadsheets:
 
-- An employee emails a request.
+- An employee sends a request by email.
 - Procurement emails three suppliers for prices.
-- Quotes arrive as PDFs in different formats.
-- Approvals happen in reply-all threads.
-- Accounts payable (AP) finds out what was ordered only when the invoice arrives.
+- Quotes come back as PDFs, each in a different format.
+- People approve in reply-all email threads.
+- Accounts payable (AP) only learns about the order when the invoice arrives.
 
-This causes:
+This causes five problems:
 
-- **No control:** spend is approved by whoever replies first, with no matrix and no segregation of duties.
-- **No fair competition:** buyers see prices as they arrive and can leak them.
-- **Slow cycle time:** nobody can tell where a request is stuck.
-- **Payment errors:** invoices are paid without checking that the goods arrived, that the price matches the PO, that the VAT number is right, or that the invoice is not a duplicate.
-- **Fraud exposure:** "our bank account changed" emails get paid.
+- **No control.** Whoever replies first approves the spend. There is no approval matrix and no separation of duties.
+- **Unfair competition.** Buyers see prices as they arrive and can share them.
+- **Slow process.** Nobody knows where a request is stuck.
+- **Payment mistakes.** Invoices get paid without checking that the goods arrived, the price matches the PO, the VAT number is correct, or the invoice is not a duplicate.
+- **Fraud.** Emails that say "our bank account changed" get paid.
 
-Mawrid is a **buyer-side procure-to-pay platform**. Requesters, procurement, approvers, finance and suppliers work on one record, from the internal request to an invoice that is ready to pay.
+Mawrid is a **buyer-side procure-to-pay platform**. Requesters, procurement, approvers, finance and suppliers all work on the same record, from the first request to an invoice that is ready to pay.
 
 ## 2. Goals, non-goals and success measures
 
 ### Goals (MVP)
 
-1. Every purchase starts from an approved requisition, and is approved by the right people according to a configurable matrix.
-2. Competitive sourcing with sealed quotations and line-level award.
-3. POs, goods receipts and supplier invoices are linked. Invoices are checked by three-way match and ZATCA QR validation before they are released for payment.
-4. Suppliers self-onboard and keep their documents current. Bank changes are controlled.
-5. Every action is auditable, and approved POs and invoices can be pushed to the customer's ERP.
+1. Every purchase starts from an approved requisition. The right people approve it, based on a configurable matrix.
+2. Suppliers compete with sealed quotations, and the buyer can award per line.
+3. POs, goods receipts and invoices are linked. Every invoice is checked (three-way match and ZATCA QR) before it is released for payment.
+4. Suppliers register themselves and keep their documents up to date. Bank changes are controlled.
+5. Every action is audited. Approved POs and invoices can be sent to the customer's ERP.
 
 ### Non-goals (for now)
 
-- Payments, or issuing invoices on a supplier's behalf (see [ADR-0006](adr/0006-buyer-side-invoice-ingestion.md)).
-- Budget control or encumbrance (the cost center is captured; checking budgets comes later).
+- Payments, or creating invoices for suppliers (see [ADR-0006](adr/0006-buyer-side-invoice-ingestion.md)).
+- Budget control. We store the cost center, but checking budgets comes later.
 - Contracts, catalogs and punch-out.
-- Multi-currency (SAR only).
-- A shared supplier network across organizations.
-- A frontend. The API is designed for a React client later.
+- Multiple currencies (SAR only).
+- A supplier network shared between organizations.
+- A frontend. The API is built so a React client can be added later.
 
 ### Success measures (for a pilot customer)
 
-- **PR → PO cycle time:** median under 5 business days.
-- **Spend through approved PRs:** above 90%.
-- **Invoices auto-matched without manual touch:** above 70%.
-- **Duplicate or wrong-VAT invoices reaching payment:** zero.
+| Measure | Target |
+|---|---|
+| PR → PO time | Median under 5 working days |
+| Spend that goes through approved PRs | Above 90% |
+| Invoices matched with no manual work | Above 70% |
+| Duplicate or wrong-VAT invoices that get paid | Zero |
 
 ## 3. Users
 
 | Persona | Role(s) | What they need |
 |---|---|---|
-| Requester (any employee) | `Requester` | Raise a PR quickly, see where it is |
-| Cost center manager, director, CFO | `Approver` (scoped by policy) | Approve or reject with context, delegate when away |
-| Procurement officer | `Buyer` | Turn PRs into RFQs or POs, compare sealed quotes, award, follow up deliveries |
+| Requester (any employee) | `Requester` | Create a PR quickly and track it |
+| Cost center manager, director, CFO | `Approver` (scoped by policy) | Approve or reject with full context; delegate when away |
+| Procurement officer | `Buyer` | Turn PRs into RFQs or POs, compare sealed quotes, award, follow deliveries |
 | Storekeeper / receiver | `Receiver` | Record what actually arrived |
-| AP clerk | `ApClerk` | Resolve invoices on hold, release matched invoices |
-| Procurement admin | `Admin` | Users, approval policies, tolerances, supplier verification |
-| Supplier contact | `SupplierUser` | Register, keep documents valid, answer RFQs, acknowledge POs, submit invoices |
+| AP clerk | `ApClerk` | Fix invoices on hold; release matched invoices |
+| Procurement admin | `Admin` | Manage users, approval policies, tolerances and supplier checks |
+| Supplier contact | `SupplierUser` | Register, keep documents valid, answer RFQs, accept POs, send invoices |
 
 ## 4. Assumptions and non-functional requirements
 
-### Volume (per organization, sized for a 500-employee company)
+### Volume (per organization, for a company of about 500 employees)
 
 | Item | Volume |
 |---|---|
 | Active suppliers | 1,500 |
 | PRs | 400 per month |
-| RFQs | 150 per month (about 5 suppliers invited each) |
+| RFQs | 150 per month (about 5 suppliers invited to each) |
 | POs | 1,000 per month |
-| Supplier invoices | 1,500 per month, about 40% of them in the last 5 days of the month |
-| Attachments | about 5 MB average; 25 MB maximum per file |
+| Supplier invoices | 1,500 per month (about 40% arrive in the last 5 days of the month) |
+| Attachments | About 5 MB on average, 25 MB maximum per file |
 
-This is small, transactional load. Correctness and auditability matter far more than throughput.
+The load is small and transactional. Correctness and audit matter much more than speed.
 
-### NFRs
+### Non-functional requirements (NFRs)
 
 | Area | Target |
 |---|---|
-| Latency | p95 below 300 ms for reads and below 600 ms for commands, excluding file upload and AI extraction |
-| Availability | 99.5% monthly |
-| Durability | RPO 15 minutes, RTO 4 hours (managed SQL with point-in-time restore) |
-| Consistency | Strong within a command (one transaction); side effects eventually consistent through the outbox, within seconds |
-| Security | TLS everywhere; tenant isolation proven by tests; OWASP ASVS L2 as the checklist |
-| Data retention | No hard deletes of business records; financial records kept per ZATCA record-keeping rules; personal data handled per the PDPL |
-| Localization | Arabic and English for all user-facing messages; business times in `Asia/Riyadh`; Saudi working week |
-| Supportability | Every request has a correlation id; every state change has an audit row of who, when and what changed |
+| Latency | p95 below 300 ms for reads and below 600 ms for commands (excluding file upload and AI extraction) |
+| Availability | 99.5% per month |
+| Data safety | RPO 15 minutes, RTO 4 hours (managed SQL with point-in-time restore) |
+| Consistency | Strong inside one command (one transaction). Side effects arrive a few seconds later, through the outbox |
+| Security | TLS everywhere; tests prove tenant isolation; OWASP ASVS Level 2 as the checklist |
+| Data retention | Business records are never hard-deleted. Financial records follow ZATCA record-keeping rules. Personal data follows the PDPL |
+| Localization | Arabic and English for all user messages; business times in `Asia/Riyadh`; Saudi work week |
+| Support | Every request has a correlation ID. Every state change has an audit row (who, when, what changed) |
 
 ## 5. End-to-end flow
 
@@ -102,45 +104,45 @@ flowchart LR
   GR --> INV[Supplier invoice]
   INV -->|QR + 3-way match| M{Match}
   M -->|ok| R[Released for payment -> ERP]
-  M -->|issue| H[On hold -> AP clerk]
+  M -->|problem| H[On hold -> AP clerk]
   H --> R
 ```
 
 ## 6. Modules and domain model
 
-The app is a modular monolith ([ADR-0001](adr/0001-modular-monolith-clean-architecture.md)). Every entity carries an `OrganizationId` ([ADR-0003](adr/0003-tenant-ready-from-day-one.md)). Every aggregate root has a `RowVersion`.
+The app is a modular monolith ([ADR-0001](adr/0001-modular-monolith-clean-architecture.md)). Every entity has an `OrganizationId` ([ADR-0003](adr/0003-tenant-ready-from-day-one.md)). Every aggregate root has a `RowVersion`.
 
 ### 6.1 Identity
 
-- `Organization`, `User`, `CostCenter`.
-- A user's role assignments can be **scoped**. For example, `Approver` for cost center `IT-001` only.
-- Supplier users belong to exactly one `Supplier`.
+- Entities: `Organization`, `User`, `CostCenter`.
+- A role can be limited to a **scope**. For example, a user can be `Approver` only for cost center `IT-001`.
+- A supplier user belongs to exactly one `Supplier`.
 
 ### 6.2 Suppliers
 
 **`Supplier`** (aggregate)
 
 - Fields: `NameAr`, `NameEn`, `VatNumber`, `CrNumber`, `Status`, `Contacts`, `Documents`, `BankAccount`.
-- **Status:** `Registered → UnderReview → Approved ⇄ Blocked`, or `Rejected`.
+- Status: `Registered → UnderReview → Approved ⇄ Blocked`, or `Rejected`.
 
 | Rule | Detail |
 |---|---|
 | VAT number | 15 digits, starts and ends with `3`, unique per organization |
 | CR number | 10 digits |
-| Required documents to approve | CR certificate, VAT certificate, bank letter. Each document has an `ExpiresOn` |
-| Expired required document | Supplier becomes **not awardable**. Open POs continue. A daily job warns 30, 14 and 3 days before expiry |
+| Documents needed to approve | CR certificate, VAT certificate, bank letter. Each has an `ExpiresOn` date |
+| Required document expired | The supplier cannot win new awards. Open POs continue. A daily job warns 30, 14 and 3 days before expiry |
 | IBAN | `SA` + 22 characters, valid mod-97 checksum |
-| Bank account change | A new `BankAccount` starts as `PendingVerification`. The supplier's invoices cannot be released for payment until a second Admin verifies it (four-eyes). The old account is kept in history |
+| Bank account change | The new `BankAccount` starts as `PendingVerification`. This supplier's invoices cannot be released for payment until a second Admin verifies it (four-eyes rule). The old account stays in history |
 
 ### 6.3 Approvals (shared engine)
 
-The engine is used by PRs and POs, and later by invoices that exceed tolerance.
+PRs and POs use this engine. Invoices that exceed tolerance will use it later.
 
 **`ApprovalPolicy`**
 
-- Has a document type (PR or PO) and ordered **rules**.
-- A rule matches on amount band (total incl. VAT), and optionally cost center or category.
-- A rule produces an ordered list of **steps**. Each step names a role and its scope (e.g. "Approver of the PR's cost center", "Finance Director", "CFO").
+- Has a document type (PR or PO) and a list of **rules** in order.
+- A rule matches on an amount band (total including VAT), and optionally on cost center or category.
+- A matching rule gives a list of **steps** in order. Each step says which role approves and for which scope. For example: "Approver of the PR's cost center", "Finance Director", "CFO".
 
 Example default matrix:
 
@@ -152,21 +154,21 @@ Example default matrix:
 
 **`ApprovalRequest`** (aggregate)
 
-- Created when a document is submitted, from a **snapshot** of the matching policy. A later policy edit never changes an in-flight approval.
-- Steps run **in order**. A rejection at any step ends the request. A step is decided by any one eligible approver.
-- **Segregation of duties:** the document's requester or creator is never eligible, even if they hold the role.
-- **Delegation:** an `ApprovalDelegation(from, to, validFrom, validTo)` makes the delegate eligible. The decision records "by X on behalf of Y".
-- **Concurrency:** two approvers acting on the same step get one success and one `412`.
+- Created when a document is submitted. It takes a **copy** of the matching policy, so later policy changes do not affect approvals already in progress.
+- Steps run **in order**. A rejection at any step ends the request. Any one eligible approver can decide a step.
+- **Separation of duties:** the requester or creator of the document can never approve it, even if they have the role.
+- **Delegation:** an `ApprovalDelegation(from, to, validFrom, validTo)` lets another user approve. The decision is saved as "by X on behalf of Y".
+- **Concurrency:** if two approvers act on the same step at the same time, one succeeds and the other gets `412`.
 
 ### 6.4 Requisitions
 
 **`PurchaseRequisition`** (aggregate)
 
-- Fields: requester, cost center, justification, needed-by date, lines (description, quantity, unit, estimated unit price, optional preferred supplier).
-- **Status:** `Draft → PendingApproval → Approved → InSourcing → Ordered`, or `Rejected` / `Cancelled`.
-- **Sourcing route,** decided by the Buyer after approval:
-  - **Direct PO:** allowed when the estimated total is at or below the organization's `DirectPurchaseLimit` (default 5,000 SAR).
-  - **RFQ:** otherwise. Policy requires at least `MinimumSuppliersPerRfq` invitations (default 3). Fewer needs a recorded **single-source justification**.
+- Fields: requester, cost center, reason, needed-by date, and lines (description, quantity, unit, estimated unit price, optional preferred supplier).
+- Status: `Draft → PendingApproval → Approved → InSourcing → Ordered`, or `Rejected` / `Cancelled`.
+- After approval, the Buyer chooses the **sourcing route**:
+  - **Direct PO** — allowed when the estimated total is at or below `DirectPurchaseLimit` (default 5,000 SAR).
+  - **RFQ** — used otherwise. At least `MinimumSuppliersPerRfq` suppliers must be invited (default 3). Inviting fewer needs a written **single-source reason**.
 
 ### 6.5 Sourcing
 
@@ -174,73 +176,76 @@ Example default matrix:
 
 - Created from one or more approved PR lines.
 - Has items, invited suppliers, a deadline, terms and attachments.
-- **Status:** `Draft → Published → Closed → Awarded`, or `Cancelled`.
+- Status: `Draft → Published → Closed → Awarded`, or `Cancelled`.
 
 | Rule | Detail |
 |---|---|
-| Publish | At least one item; invited suppliers must be Approved and awardable; deadline at least `MinimumRfqWindow` away (default 3 business days) |
-| Sealed | Prices hidden until close ([ADR-0007](adr/0007-sealed-quotations.md)) |
-| Deadline | `IClock.UtcNow >= Deadline` means closed for submissions, **enforced in the domain**. The close job only updates the status and notifies |
-| Amendment after publish | Suppliers who already submitted must re-confirm; deadline is extended if needed to keep the minimum window |
+| Publish | Needs at least one item. All invited suppliers must be approved and allowed to win awards. The deadline must be at least `MinimumRfqWindow` away (default 3 working days) |
+| Sealed | Prices are hidden until close ([ADR-0007](adr/0007-sealed-quotations.md)) |
+| Deadline | When `IClock.UtcNow >= Deadline`, submissions are closed. This is **checked in the domain**. The close job only updates the status and sends notifications |
+| Change after publish | Suppliers who already submitted must confirm again. The deadline moves if needed, to keep the minimum window |
 
 **`Quotation`** (aggregate)
 
-- One per `(RfqId, SupplierId)`, enforced by a unique index.
-- Has lines (unit price, VAT category, lead time in days), a validity date and attachments.
-- Revisable until the deadline. Every revision is stored, and only the latest one counts.
+- One quotation per `(RfqId, SupplierId)`, enforced by a unique index.
+- Has lines (unit price, VAT category, lead time in days), a valid-until date and attachments.
+- The supplier can change it until the deadline. Every version is saved, and only the latest one counts.
 
 **Award**
 
-- Made per RFQ line, choosing one quotation line per RFQ line. Partial award is allowed: unawarded lines go back to the PR as unsourced.
-- Awarding to a supplier that is not the lowest price needs a justification.
-- On award: the RFQ becomes `Awarded`, a **Draft PO is created per winning supplier**, and the losing suppliers are notified through the outbox.
+- Done **per RFQ line**: for each RFQ line, the buyer picks one quotation line. Partial award is allowed; lines with no award go back to the PR as not sourced.
+- Choosing a supplier that is not the cheapest needs a written reason.
+- After the award:
+  - the RFQ becomes `Awarded`;
+  - a **draft PO is created for each winning supplier**;
+  - suppliers who did not win are notified through the outbox.
 
 ### 6.6 Purchasing
 
 **`PurchaseOrder`** (aggregate)
 
-- Fields: supplier, lines (from award or direct PR), delivery address, payment terms, totals.
-- **Status:** `Draft → PendingApproval → Approved → Sent → Acknowledged → PartiallyReceived → Received → Closed`, or `Cancelled`.
+- Fields: supplier, lines (from the award or directly from the PR), delivery address, payment terms, totals.
+- Status: `Draft → PendingApproval → Approved → Sent → Acknowledged → PartiallyReceived → Received → Closed`, or `Cancelled`.
 
 | Rule | Detail |
 |---|---|
-| Submit | Opens an approval request from the PO policy |
-| Supplier | Must still be awardable at submit time |
-| Cancel | Only before any receipt |
-| Close | Received in full **and** invoiced in full; or closed manually with a reason |
-| Totals | Computed by the domain, line by line: VAT per line, rounded half away from zero to 2 decimals |
+| Submit | Starts an approval request using the PO policy |
+| Supplier | Must still be allowed to win awards when the PO is submitted |
+| Cancel | Only before anything is received |
+| Close | When fully received **and** fully invoiced, or closed by hand with a reason |
+| Totals | Calculated in the domain, line by line: VAT per line, rounded half away from zero to 2 decimals |
 
 **`GoodsReceipt`** (aggregate)
 
-- Lines record quantity received, quantity rejected and a reason.
-- The cumulative received quantity can never exceed the ordered quantity plus an over-delivery tolerance (default 0%).
+- Each line has quantity received, quantity rejected, and a reason.
+- The total received quantity can never be more than the ordered quantity plus the over-delivery tolerance (default 0%).
 
 ### 6.7 Payables
 
 **`SupplierInvoice`** (aggregate)
 
 - Fields: supplier invoice number, issue date, PO reference, lines, VAT breakdown, totals, source files (XML/PDF), decoded QR.
-- **Status:** `Received → Validating → Matched | OnHold → ReleasedForPayment`, or `Rejected`.
+- Status: `Received → Validating → Matched | OnHold → ReleasedForPayment`, or `Rejected`.
 - **Duplicate check:** unique `(OrganizationId, SupplierId, SupplierInvoiceNumber)`.
-- **Validation and matching** ([ADR-0006](adr/0006-buyer-side-invoice-ingestion.md)) produce a list of `HoldReason { Code, LineRef?, Expected, Actual }`:
+- **Checks** ([ADR-0006](adr/0006-buyer-side-invoice-ingestion.md)) create a list of `HoldReason { Code, LineRef?, Expected, Actual }`:
 
-| Check | Fails when |
+| Code | Fails when |
 |---|---|
-| `qr.missing` / `qr.malformed` | No QR or invalid TLV |
-| `qr.vat_mismatch` | QR seller VAT ≠ supplier master VAT |
-| `qr.total_mismatch` | QR totals ≠ invoice body totals |
-| `vat.calculation` | Line VAT ≠ line net × rate, beyond 0.01 SAR per line |
-| `match.price` | Invoice unit price > PO unit price beyond price tolerance (default 2% and at most 500 SAR per line) |
-| `match.quantity` | Invoiced quantity (cumulative) > accepted received quantity |
-| `supplier.bank_unverified` | Supplier's bank account is pending verification |
+| `qr.missing` / `qr.malformed` | There is no QR, or the TLV is invalid |
+| `qr.vat_mismatch` | The QR seller VAT number is not the supplier's VAT number |
+| `qr.total_mismatch` | The QR totals do not match the invoice totals |
+| `vat.calculation` | Line VAT ≠ line net × rate, by more than 0.01 SAR per line |
+| `match.price` | Invoice unit price is higher than the PO unit price by more than the price tolerance (default 2%, and at most 500 SAR per line) |
+| `match.quantity` | Total invoiced quantity is more than the accepted received quantity |
+| `supplier.bank_unverified` | The supplier's bank account is waiting for verification |
 
-- An AP clerk resolves a hold by correcting data, requesting a credit note (later milestone), or overriding with a reason. Overrides above tolerance go through an approval.
-- **VAT rates are effective-dated** (`VatRate { Category, Rate, ValidFrom }`), so historical documents compute correctly.
+- An AP clerk fixes a hold in one of three ways: correct the data, ask the supplier for a credit note (later milestone), or override with a reason. An override above tolerance needs approval.
+- **VAT rates have start dates** (`VatRate { Category, Rate, ValidFrom }`), so old documents still calculate correctly.
 
 ### 6.8 Money and time
 
-- `Money(decimal Amount, string Currency)` is stored as `decimal(19,4)` for unit prices and `decimal(19,2)` for totals. A `double` is never used for money.
-- Everything is stored in UTC. Business deadlines and SLAs are evaluated in `Asia/Riyadh` with a working-week calendar (Sunday to Thursday, configurable holidays).
+- `Money(decimal Amount, string Currency)`. Unit prices are stored as `decimal(19,4)` and totals as `decimal(19,2)`. Never use `double` for money.
+- All times are stored in UTC. Business deadlines and SLAs are checked in `Asia/Riyadh`, with a work-week calendar (Sunday to Thursday, holidays configurable).
 
 ## 7. Architecture
 
@@ -253,7 +258,7 @@ src/
                           Common/    behaviors, Result, ICurrentUser, IClock, IAppDbContext
   Mawrid.Infrastructure/  {Module}/  EF configurations, integrations
                           Common/    AppDbContext, interceptors, outbox worker, storage, auth
-  Mawrid.Api/             {Module}/  endpoints/controllers
+  Mawrid.Api/             {Module}/  endpoints
                           Common/    ProblemDetails, idempotency, localization, OpenAPI
 tests/
   Mawrid.Domain.Tests/  Mawrid.Application.Tests/  Mawrid.Api.Tests/  Mawrid.Architecture.Tests/
@@ -261,58 +266,61 @@ tests/
 
 ### 7.2 Command pipeline
 
-Every command passes through the same MediatR behaviors, in this order:
+Every command goes through the same MediatR behaviors, in this order:
 
-1. **Logging & tracing:** start an activity, log the command name and correlation id.
-2. **Validation:** FluentValidation; failure returns `400` with field errors.
-3. **Idempotency:** if the HTTP layer supplied an `Idempotency-Key`, return the stored response on replay.
-4. **Unit of work:** handler → `SaveChanges`. Within one transaction, the interceptors stamp the tenant and audit fields, write audit rows from domain events, and write outbox rows.
-5. **Result mapping:** `Result<T>` → HTTP status + `ProblemDetails` with a stable `code`.
+1. **Logging and tracing** — start a trace and log the command name and correlation ID.
+2. **Validation** — run FluentValidation. If it fails, return `400` with field errors.
+3. **Idempotency** — if the request has an `Idempotency-Key` we have seen, return the saved response.
+4. **Unit of work** — run the handler, then `SaveChanges`. In the same transaction, interceptors:
+   - set the tenant and audit fields;
+   - write audit rows from domain events;
+   - write outbox rows.
+5. **Result mapping** — turn `Result<T>` into an HTTP status and a `ProblemDetails` with a stable `code`.
 
-Queries skip steps 3–4. They read with `AsNoTracking()` and project straight to DTOs.
+Queries skip steps 3 and 4. They read with `AsNoTracking()` and map straight to DTOs.
 
 ### 7.3 Side effects
 
-These follow the transactional outbox ([ADR-0004](adr/0004-transactional-outbox.md)):
+Side effects use the transactional outbox ([ADR-0004](adr/0004-transactional-outbox.md)):
 
-- A `BackgroundService` processes the outbox.
-- **Hangfire** runs scheduled jobs: RFQ close, document expiry warnings, approval SLA reminders and outbox cleanup.
-- **Consumers:** SignalR notifier, email sender (an interface; dev uses a log/file sink), ERP webhook dispatcher.
+- A `BackgroundService` reads and processes the outbox.
+- **Hangfire** runs scheduled jobs: closing RFQs, document expiry warnings, approval reminders and outbox cleanup.
+- **Consumers:** SignalR notifier, email sender (an interface; development writes to a log), ERP webhook sender.
 
 ### 7.4 Integrations
 
 | Integration | Approach |
 |---|---|
-| ERP (outbound) | Webhooks for `purchase_order.approved` and `supplier_invoice.released`. Signed with HMAC-SHA256 (`X-Mawrid-Signature`), retried with backoff, delivery log, manual replay. A mock receiver lives in `tools/` |
-| ERP (inbound) | Cost center import by CSV upload and API |
-| File storage | `IFileStorage`: Azure Blob in production, Azurite locally. Short-lived read URLs. Content-type and size allow-list. Scan status gate |
-| AI extraction | `IInvoiceExtractor` behind a typed `HttpClient` with timeout, retry and a circuit breaker. Returns a typed JSON schema with a confidence per field. Output is **always** a draft for a person to confirm |
+| ERP (outbound) | Webhooks for `purchase_order.approved` and `supplier_invoice.released`. Signed with HMAC-SHA256 (`X-Mawrid-Signature`), retried with backoff, saved in a delivery log, can be replayed by hand. A mock receiver lives in `tools/` |
+| ERP (inbound) | Import cost centers by CSV upload or API |
+| File storage | `IFileStorage`: Azure Blob in production, Azurite locally. Read links expire quickly. Allowed file types and size limit. Files are blocked until the virus scan passes |
+| AI extraction | `IInvoiceExtractor`, behind a typed `HttpClient` with timeout, retry and circuit breaker. It returns typed JSON with a confidence score per field. The result is **always** a draft that a person must confirm |
 
 ## 8. Data
 
-Key constraints (all scoped by `OrganizationId`):
+Key constraints (all include `OrganizationId`):
 
 | Table | Constraint |
 |---|---|
-| `Suppliers` | unique `(OrganizationId, VatNumber)` |
-| `Quotations` | unique `(RfqId, SupplierId)` |
-| `SupplierInvoices` | unique `(OrganizationId, SupplierId, SupplierInvoiceNumber)` |
-| `IdempotencyKeys` | unique `(OrganizationId, Key)`, expires after 24 h |
-| `OutboxMessages` | index `(ProcessedOnUtc, OccurredOnUtc)` filtered on unprocessed |
-| `AuditEntries` | append-only: entity, id, action, changes (JSON), user, on-behalf-of, timestamp, correlation id |
+| `Suppliers` | Unique `(OrganizationId, VatNumber)` |
+| `Quotations` | Unique `(RfqId, SupplierId)` |
+| `SupplierInvoices` | Unique `(OrganizationId, SupplierId, SupplierInvoiceNumber)` |
+| `IdempotencyKeys` | Unique `(OrganizationId, Key)`; rows expire after 24 hours |
+| `OutboxMessages` | Index on `(ProcessedOnUtc, OccurredOnUtc)`, filtered to unprocessed rows |
+| `AuditEntries` | Insert only. Columns: entity, ID, action, changes (JSON), user, on-behalf-of, time, correlation ID |
 | All aggregate roots | `RowVersion rowversion` |
 
-Soft delete (`IsDeleted`, `DeletedBy`, `DeletedOnUtc`) applies only to master data such as contacts and cost centers. Business documents are never deleted, only cancelled.
+Soft delete (`IsDeleted`, `DeletedBy`, `DeletedOnUtc`) is used only for master data like contacts and cost centers. Business documents are never deleted, only cancelled.
 
 ## 9. API conventions
 
-- **Base:** `/api/v1`, JSON (camelCase), and an OpenAPI document with examples.
-- **State changes** are explicit sub-resources: `POST /purchase-orders/{id}/submit`.
-- **Concurrency:** `ETag` on reads. `If-Match` is required on `PUT`, `PATCH` and state transitions. A stale version returns `412`.
-- **Idempotency:** `Idempotency-Key` header on non-idempotent POSTs.
-- **Errors:** RFC 7807 `ProblemDetails` with `code`, `traceId` and `errors` (for validation). Messages are localized by `Accept-Language` (`ar`, `en`).
-- **Lists:** `?page=&pageSize=&sort=` returns `{ items, page, pageSize, total }`. `pageSize` is capped at 100.
-- **Buyer and supplier surfaces** are separate route groups (`/api/v1/...` and `/api/v1/supplier/...`) with separate policies.
+- **Base:** `/api/v1`, JSON in camelCase, and an OpenAPI document with examples.
+- **State changes** are separate endpoints, for example `POST /purchase-orders/{id}/submit`.
+- **Concurrency:** reads return an `ETag`. `PUT`, `PATCH` and state changes need `If-Match`. An old version returns `412`.
+- **Idempotency:** POSTs that are not idempotent accept an `Idempotency-Key` header.
+- **Errors:** RFC 7807 `ProblemDetails` with `code`, `traceId` and `errors` (for validation). Messages follow `Accept-Language` (`ar` or `en`).
+- **Lists:** `?page=&pageSize=&sort=` returns `{ items, page, pageSize, total }`. The maximum `pageSize` is 100.
+- **Buyer and supplier APIs** are separate route groups (`/api/v1/...` and `/api/v1/supplier/...`) with separate policies.
 
 Main endpoints:
 
@@ -325,8 +333,8 @@ Approvals       GET /approvals/inbox · POST /approvals/{id}/approve · /reject
 Suppliers       GET /suppliers · POST /suppliers/{id}/approve · /block
                 POST /suppliers/{id}/bank-accounts/{bankId}/verify
 RFQs            POST /rfqs · PUT /rfqs/{id} · POST /rfqs/{id}/publish · /amend · /cancel
-                GET /rfqs/{id}/submissions (who + when, before close)
-                GET /rfqs/{id}/comparison (after close) · POST /rfqs/{id}/award
+                GET /rfqs/{id}/submissions   (who and when, before close)
+                GET /rfqs/{id}/comparison    (after close) · POST /rfqs/{id}/award
 POs             GET /purchase-orders · POST /purchase-orders/{id}/submit · /send · /cancel
 Receipts        POST /purchase-orders/{id}/receipts
 Invoices        GET /invoices?status=OnHold · POST /invoices/{id}/resolve · /release
@@ -334,80 +342,88 @@ Supplier portal POST /supplier/register · PUT /supplier/profile · POST /suppli
                 GET /supplier/rfqs · PUT /supplier/rfqs/{id}/quotation
                 POST /supplier/purchase-orders/{id}/acknowledge
                 POST /supplier/invoices (XML/PDF upload) · POST /supplier/invoices/extract
-Webhooks        CRUD /webhook-subscriptions · GET /webhook-deliveries · POST /webhook-deliveries/{id}/replay
+Webhooks        CRUD /webhook-subscriptions · GET /webhook-deliveries
+                POST /webhook-deliveries/{id}/replay
 Ops             GET /health/live · /health/ready · WS /hubs/notifications
 ```
 
 ## 10. Security
 
-- **Authentication:** ASP.NET Core Identity, short-lived JWT access tokens (15 min) and refresh tokens. Refresh tokens are rotated on every use, stored hashed, and **reuse detection** revokes the whole token family. Lockout after repeated failed logins. Internal-user SSO (OIDC) is planned and has its own seam.
-- **Authorization:** policies, not bare role checks. Scoped roles (e.g. approver of a cost center), resource checks (a supplier sees only its own records), and state-dependent reads (sealed quotations).
-- **Tenant isolation:** global query filters plus integration tests with two organizations ([ADR-0003](adr/0003-tenant-ready-from-day-one.md)).
-- **Files:** type and size allow-lists, scan gate, private containers, short-lived links.
-- **Input and output:** validation on every command. No raw SQL built from input. Security headers. Rate limiting on auth and on supplier public endpoints.
-- **Secrets:** user-secrets in development, Key Vault in production. Nothing secret in the repository.
+- **Authentication:**
+  - ASP.NET Core Identity, with short-lived JWT access tokens (15 minutes) and refresh tokens.
+  - A refresh token is replaced on every use and stored hashed. If an old one is reused, the whole token family is revoked.
+  - Accounts lock after too many failed logins.
+  - SSO (OIDC) for internal users is planned and has its own extension point.
+- **Authorization:** policies, not only role checks:
+  - scoped roles (for example, approver for one cost center);
+  - resource checks (a supplier sees only its own records);
+  - reads that depend on state (sealed quotations).
+- **Tenant isolation:** global query filters, plus integration tests with two organizations ([ADR-0003](adr/0003-tenant-ready-from-day-one.md)).
+- **Files:** allowed types and size limit, virus scan, private storage, links that expire quickly.
+- **Input:** every command is validated. No raw SQL built from user input. Security headers are set. Login and public supplier endpoints are rate limited.
+- **Secrets:** user-secrets in development, Key Vault in production. No secrets in the repo.
 
 ## 11. Operations
 
-| Concern | Choice |
+| Topic | Choice |
 |---|---|
-| Runtime | .NET 10 LTS ([ADR-0002](adr/0002-target-dotnet-10.md)); container image (multi-stage, non-root) |
-| Local dev | `docker compose up`: api, SQL Server 2022, Azurite, mock ERP receiver |
-| Environments | Development · Staging · Production; config by `appsettings.{Env}.json` + environment variables + Key Vault |
-| Migrations | EF Core migration bundle built in CI and run as a deploy step. Never `Database.Migrate()` at startup in production |
-| Observability | Serilog (structured JSON) + OpenTelemetry traces and metrics; business metrics: PR→PO cycle time, quotations per RFQ, invoices on hold by reason |
-| Health | `/health/live` (process) · `/health/ready` (SQL, storage, outbox lag below threshold) |
-| CI | GitHub Actions: restore → build (warnings as errors) → tests (Testcontainers) → coverage → image build |
+| Runtime | .NET 10 LTS ([ADR-0002](adr/0002-target-dotnet-10.md)); container image (multi-stage, non-root user) |
+| Local development | `docker compose up` starts the API, SQL Server 2022, Azurite and the mock ERP receiver |
+| Environments | Development, Staging, Production. Config comes from `appsettings.{Env}.json`, environment variables and Key Vault |
+| Migrations | CI builds an EF Core migration bundle; the deploy runs it as a separate step. Never call `Database.Migrate()` on startup in production |
+| Observability | Serilog (JSON logs) + OpenTelemetry traces and metrics. Business metrics: PR→PO time, quotations per RFQ, invoices on hold by reason |
+| Health | `/health/live` (the process is up) and `/health/ready` (SQL, storage, and outbox delay below a limit) |
+| CI | GitHub Actions: restore → build (warnings are errors) → tests (Testcontainers) → coverage → image build |
 
 ## 12. Testing strategy
 
-| Level | What | Tools |
+| Level | What we test | Tools |
 |---|---|---|
-| Domain | Invariants and state machines: deadline, sealing, SoD, matching math, VAT rounding | xUnit, FluentAssertions 7 |
-| Application | Handlers with a real database, so EF translation and constraints are tested | Testcontainers SQL Server |
-| API | End to end through HTTP: auth, ETag/If-Match, idempotency, ProblemDetails, **two-tenant isolation** | `WebApplicationFactory` |
+| Domain | Rules and state changes: deadline, sealing, separation of duties, matching math, VAT rounding | xUnit, FluentAssertions 7 |
+| Application | Handlers against a real database, so EF queries and constraints are tested too | Testcontainers SQL Server |
+| API | Full HTTP flow: auth, ETag/If-Match, idempotency, ProblemDetails, **isolation between two tenants** | `WebApplicationFactory` |
 | Architecture | Layer and module dependency rules | NetArchTest |
-| Contract | OpenAPI snapshot diffed in CI | Verify |
+| Contract | The OpenAPI document is compared with a saved snapshot in CI | Verify |
 
-Test data uses builders (`ASupplier().Approved().Build()`), and `IClock` is faked everywhere time matters.
+Test data uses builders (for example `ASupplier().Approved().Build()`). `IClock` is faked wherever time matters.
 
 ## 13. Delivery plan
 
-The **MVP** ends at M7: one customer could run a pilot on it.
+The **MVP** ends at M7. At that point, one customer can run a pilot.
 
-| # | Milestone | Main .NET concepts |
+| # | Milestone | Main .NET topics |
 |---|---|---|
-| M1 | Skeleton: solution, central packages, `global.json`, Docker Compose, AppDbContext, health checks, Serilog + OTel, ProblemDetails, architecture tests, CI | Hosting, DI, configuration, middleware |
-| M2 | Identity & tenancy: organizations, users, scoped roles, JWT + refresh rotation, `ICurrentUser`, tenant filters, audit + outbox interceptors | Identity, auth handlers, EF interceptors, query filters |
-| M3 | Suppliers: registration, documents, review, IBAN, bank-change four-eyes, file storage | Value objects, owned types, `IFileStorage`, Azurite |
-| M4 | Approvals engine + requisitions | Policies, snapshotting, delegation, concurrency (`If-Match`) |
-| M5 | Sourcing: RFQ, sealed quotations, amendments, line award → POs | Aggregates, unique indexes, state-dependent authorization |
-| M6 | Purchasing: PO lifecycle, goods receipt, Hangfire jobs, SignalR | Background processing, real-time |
-| M7 | Payables: invoice intake (UBL XML), QR TLV validation, three-way match, holds, release; ERP webhooks | XML parsing, money math, HMAC, idempotency |
-| M8 | AI invoice extraction for PDF-only invoices (human-in-the-loop) | Typed `HttpClient`, resilience, structured output |
-| M9 | Ops hardening: rate limiting, OpenAPI contract tests, migration bundle, load smoke test | Production readiness |
+| M1 | Skeleton: solution, central package management, `global.json`, Docker Compose, `AppDbContext`, health checks, Serilog + OpenTelemetry, ProblemDetails, architecture tests, CI | Hosting, DI, configuration, middleware |
+| M2 | Identity and tenancy: organizations, users, scoped roles, JWT + refresh token rotation, `ICurrentUser`, tenant filters, audit and outbox interceptors | Identity, auth handlers, EF interceptors, query filters |
+| M3 | Suppliers: registration, documents, review, IBAN check, four-eyes bank change, file storage | Value objects, owned types, `IFileStorage`, Azurite |
+| M4 | Approval engine + requisitions | Policies, policy copies, delegation, concurrency (`If-Match`) |
+| M5 | Sourcing: RFQs, sealed quotations, changes after publish, per-line award → POs | Aggregates, unique indexes, state-based authorization |
+| M6 | Purchasing: PO lifecycle, goods receipt, Hangfire jobs, SignalR | Background jobs, real-time updates |
+| M7 | Payables: invoice upload (UBL XML), QR TLV check, three-way match, holds, release; ERP webhooks | XML parsing, money math, HMAC, idempotency |
+| M8 | AI extraction for PDF-only invoices (a person confirms every result) | Typed `HttpClient`, resilience, structured output |
+| M9 | Production hardening: rate limiting, OpenAPI contract tests, migration bundle, basic load test | Production readiness |
 
-Later: budgets and encumbrance, PO change orders with re-approval, credit notes, RFQ clarification Q&A, contracts and catalogs, OIDC SSO, React frontend.
+Later: budgets, PO change orders with re-approval, credit notes, RFQ questions and answers, contracts and catalogs, OIDC SSO, React frontend.
 
 ## 14. Risks and open questions
 
-| Risk / question | Mitigation / owner |
+| Risk / question | Plan |
 |---|---|
-| ZATCA UBL details vary between suppliers' solutions | Parse a minimal field set; collect real sample invoices; full SDK validation later |
-| Approval matrix shapes differ per customer | Rules engine is data-driven; start with amount + cost center; add category when a customer needs it |
-| AI extraction errors on poor scans | Confidence per field; always human-confirmed; never auto-release from AI data |
-| Outbox polling load at scale | Fine at these volumes; switch to a broker (Service Bus) behind the same interface if needed |
-| Open: should suppliers see their rank after award? | Default no; decide with pilot customer |
-| Open: partial invoicing before full receipt? | Default allowed up to accepted quantity |
+| ZATCA UBL details differ between suppliers' systems | Read only the fields we need; collect real sample invoices; full SDK validation later |
+| Each customer has a different approval matrix | The rules are data, not code. Start with amount + cost center; add category when a customer needs it |
+| AI extraction makes mistakes on bad scans | A confidence score per field; a person always confirms; never auto-release from AI data |
+| Outbox polling under higher load | Fine at these volumes. If needed, switch to a message broker (e.g. Service Bus) behind the same interface |
+| Open: should suppliers see their rank after the award? | Default: no. Decide with the pilot customer |
+| Open: can a supplier invoice before everything is received? | Default: yes, up to the accepted quantity |
 
 ## 15. Interview talking points
 
-- Why the deadline is enforced in the domain and not by the scheduled job.
-- Sealed bids: authorization that depends on **state**, not only role.
-- The approval engine: snapshotting policy, segregation of duties, delegation, concurrent approvers → `412`.
-- Outbox vs dispatch after commit, and why consumers must be idempotent.
-- Tolerant three-way match and effective-dated VAT.
-- Why the platform **validates** ZATCA invoices instead of issuing them.
-- Bank-change fraud and the four-eyes control.
-- Tenant-ready from day one: query filters, the tenant inside unique indexes, two-tenant tests.
-- Licensing awareness: MediatR, AutoMapper and FluentAssertions.
+- Why the deadline is checked in the domain, not by the scheduled job.
+- Sealed bids: access depends on the record's **state**, not only the user's role.
+- The approval engine: policy copies, separation of duties, delegation, and two approvers at once → `412`.
+- Outbox vs. sending after commit, and why consumers must be idempotent.
+- Three-way match with tolerances, and VAT rates with start dates.
+- Why the platform **checks** ZATCA invoices instead of creating them.
+- Bank-change fraud and the four-eyes rule.
+- Tenant-ready from day one: query filters, tenant in unique indexes, tests with two tenants.
+- Library licenses: MediatR, AutoMapper and FluentAssertions.

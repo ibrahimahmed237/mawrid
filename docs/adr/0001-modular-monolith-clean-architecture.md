@@ -5,20 +5,23 @@
 
 ## Context
 
-Procurement has several sub-domains with their own language and rules: supplier management, requisitions, sourcing, purchasing, payables and approvals. The team is small and the load is modest, so microservices would add network failure modes, distributed transactions and ops cost with no benefit. A plain layered app, though, lets any handler query any table, and boundaries erode within months.
+Procurement has several sub-domains, each with its own words and rules: suppliers, requisitions, sourcing, purchasing, payables and approvals.
+
+- **Microservices are too much.** The team is small and the load is low, so they would only add network failures, distributed transactions and operations cost.
+- **A plain layered app is too little.** Any handler can read any table, so the boundaries break down within months.
 
 ## Decision
 
-One deployable, organized as **modules inside Clean Architecture layers**:
+Build one deployable app, split into **modules inside Clean Architecture layers**:
 
-- The layers are `Domain → Application → Infrastructure → Api`, and dependencies point inward only.
-- The modules are Identity, Suppliers, Requisitions, Sourcing, Purchasing, Payables and Approvals. Each module is a folder/namespace in every layer.
-- A module never reads another module's tables. It calls that module's published application interface (e.g. `ISupplierDirectory`) or reacts to its events.
-- Commands and queries go through a mediator, so cross-cutting behavior lives in pipeline behaviors: validation, transaction, idempotency, logging.
-- Architecture tests (NetArchTest) fail the build on a layer or module violation.
+- Layers: `Domain → Application → Infrastructure → Api`. Dependencies point inward only.
+- Modules: Identity, Suppliers, Requisitions, Sourcing, Purchasing, Payables, Approvals. Each module is a folder (and namespace) in every layer.
+- A module never reads another module's tables. It calls the other module's public interface (for example `ISupplierDirectory`) or reacts to its events.
+- Commands and queries go through a mediator. Shared logic (validation, transactions, idempotency, logging) lives in pipeline behaviors.
+- Architecture tests (NetArchTest) fail the build if a layer or module rule is broken.
 
 ## Consequences
 
-- One database and one transaction for most use cases: simple and consistent.
-- A module can be extracted into a service later, because its seams are already explicit.
-- There is more ceremony per feature than in a flat app. That is accepted for the learning value and the readability it gives at scale.
+- One database and one transaction for most use cases. This is simple and consistent.
+- A module can become its own service later, because its boundaries are already clear.
+- Each feature needs a few more files than in a flat app. We accept this for readability and for the learning value.

@@ -5,17 +5,23 @@
 
 ## Context
 
-State changes trigger side effects: audit entries, SignalR notifications, emails and ERP webhooks. If those are sent in-process after commit, a crash between commit and send loses them. If they are sent before commit, a rollback leaves notifications about things that never happened.
+State changes cause side effects: audit rows, SignalR notifications, emails and ERP webhooks.
+
+- If we send them **after** the commit, a crash in between loses them.
+- If we send them **before** the commit and the transaction rolls back, we have told people about something that never happened.
 
 ## Decision
 
-- **Audit** entries are written in the **same transaction** as the change, by a `SaveChanges` interceptor that reads the domain events raised by aggregates.
+- **Audit rows** are written **in the same transaction** as the change. A `SaveChanges` interceptor builds them from the domain events raised by aggregates.
 - **Side effects** are written as rows in an `OutboxMessages` table, in the same transaction.
-- A background worker polls the outbox (with `UPDLOCK, READPAST` so several instances do not double-pick), dispatches each message, and marks it processed. Failures retry with exponential backoff. After N attempts a message is parked for inspection.
-- Every consumer is **idempotent**, keyed by the outbox message id. Delivery is at-least-once, never exactly-once.
+- A background worker reads the outbox, sends each message, and marks it as processed.
+  - It uses `UPDLOCK, READPAST`, so two app instances never pick the same row.
+  - Failures retry with exponential backoff.
+  - After N failed attempts, the message is parked so someone can check it.
+- Every consumer is **idempotent**, using the outbox message ID. Delivery is at-least-once, not exactly-once.
 
 ## Consequences
 
-- No lost events, and no phantom events.
-- Notifications have a small delay (the polling interval, about 1–2 seconds).
-- The outbox table needs a retention and cleanup job.
+- No lost events, and no events for changes that were rolled back.
+- Notifications arrive a little later (one polling interval, about 1–2 seconds).
+- The outbox table needs a cleanup job.

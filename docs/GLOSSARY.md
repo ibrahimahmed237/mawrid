@@ -1,16 +1,16 @@
 # Glossary
 
-The domain language used in code, the API and the UI. Code uses the English term. The Arabic term is what users see in the Arabic UI.
+The domain words we use in the code, the API and the UI. The code uses the English word. Users of the Arabic UI see the Arabic word.
 
 | Term | Arabic | Code name | Meaning |
 |---|---|---|---|
 | Organization | المنشأة | `Organization` | The buyer company (tenant) |
 | Cost center | مركز التكلفة | `CostCenter` | Department or budget owner that spend is charged to |
 | Purchase requisition (PR) | طلب شراء داخلي | `PurchaseRequisition` | An employee's internal request to buy something |
-| Request for quotation (RFQ) | طلب عرض سعر | `Rfq` | An invitation to selected suppliers to price a list of items |
+| Request for quotation (RFQ) | طلب عرض سعر | `Rfq` | A request to selected suppliers to give prices for a list of items |
 | Quotation | عرض سعر | `Quotation` | A supplier's priced response to an RFQ |
 | Sealed bid | عرض مغلق | — | Quotation contents are hidden from the buyer until the RFQ closes |
-| Award | ترسية | `Award` | Choosing the winning supplier for each RFQ line |
+| Award | ترسية | `Award` | Picking the winning supplier for each RFQ line |
 | Purchase order (PO) | أمر شراء | `PurchaseOrder` | A binding order sent to a supplier |
 | Goods receipt (GRN) | محضر استلام | `GoodsReceipt` | A record of what was actually delivered and accepted |
 | Supplier invoice | فاتورة المورد | `SupplierInvoice` | The supplier's tax invoice for delivered goods or services |

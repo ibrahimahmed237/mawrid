@@ -1,20 +1,22 @@
-# 0007. Sealed quotations until RFQ close
+# 0007. Sealed quotations until the RFQ closes
 
 - Status: Accepted
 - Date: 2026-11-09
 
 ## Context
 
-If buyers can see prices while an RFQ is open, one supplier's price can be leaked to another, which breaks fair competition. Sealed bidding is standard practice in formal tendering, including government tendering in KSA.
+If buyers can see prices while an RFQ is open, one supplier's price can be shared with another. That makes the competition unfair. Sealed bids are standard in formal tenders, including government tenders in Saudi Arabia.
 
 ## Decision
 
-- While an RFQ is `Published`, buyers see **who** has submitted (supplier and time), but not prices, line details or attachments.
-- Comparison and award are allowed only after close. A deadline that has passed counts as closed even if the close job has not run yet.
-- Suppliers can revise their own quotation until the deadline. Each revision is kept, and only the latest one counts.
-- If the RFQ is amended after publishing (items, quantities or deadline), suppliers who already submitted must re-confirm, and the deadline must leave a configurable minimum window after the amendment.
+- While an RFQ is `Published`, buyers see **who** submitted and when. They do not see prices, line details or attachments.
+- Comparison and award are allowed only after the RFQ closes. If the deadline has passed, the RFQ counts as closed, even if the close job has not run yet.
+- A supplier can change its own quotation until the deadline. Every version is saved, and only the latest one counts.
+- If the RFQ changes after it is published (items, quantities or deadline):
+  - suppliers who already submitted must confirm again;
+  - the deadline must leave a minimum window after the change (configurable).
 
 ## Consequences
 
-- Read authorization depends on RFQ state, not only on role. This is tested explicitly.
-- A small extra audit benefit: every reveal (the first comparison view) is logged.
+- Who can read a quotation depends on the RFQ's state, not only the user's role. We test this explicitly.
+- Extra audit benefit: the first time a buyer opens the comparison is logged.

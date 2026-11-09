@@ -1,21 +1,26 @@
-# 0005. Dependency licensing policy
+# 0005. Library license rules
 
 - Status: Accepted
 - Date: 2026-11-09
 
 ## Context
 
-Several popular .NET libraries changed to commercial licensing: MediatR (v13+) and AutoMapper in July 2025, and FluentAssertions (v8+). A commercial product must not pull in a license obligation by accident during a routine `dotnet add package`.
+Some popular .NET libraries became commercial:
+
+- MediatR (v13+) and AutoMapper, in July 2025;
+- FluentAssertions (v8+).
+
+A commercial product must not get a license obligation by accident, just from a normal `dotnet add package`.
 
 ## Decision
 
-- Only permissive licenses (MIT, Apache-2.0, BSD) are used, or LGPL for runtime-only use (Hangfire core).
-- **MediatR is pinned to 12.x** (Apache-2.0). Handler code depends only on `IRequest`/`IRequestHandler`, so a swap (to a source-generated mediator or plain services) is mechanical.
-- **No AutoMapper.** Mapping is explicit, in projections (`Select(x => new Dto(...))`).
-- **FluentAssertions is pinned to 7.x** in test projects.
-- `Directory.Packages.props` (central package management) pins every version. Dependabot is configured to ignore major-version bumps for the pinned packages.
+- Use only permissive licenses (MIT, Apache-2.0, BSD). LGPL is allowed for runtime use only (Hangfire core).
+- **Pin MediatR to 12.x** (Apache-2.0). Our code uses only `IRequest` and `IRequestHandler`, so replacing it later (with a source-generated mediator or plain services) is simple.
+- **Do not use AutoMapper.** Write mappings by hand in projections (`Select(x => new Dto(...))`).
+- **Pin FluentAssertions to 7.x** in test projects.
+- `Directory.Packages.props` (central package management) pins every version. Dependabot ignores major-version updates for the pinned packages.
 
 ## Consequences
 
-- We consciously stay on older majors of two libraries and track their security advisories.
-- Mapping code is a bit more verbose, and much easier to debug.
+- We stay on older major versions of two libraries on purpose, and we watch their security advisories.
+- Hand-written mapping is a bit longer, but much easier to debug.

@@ -1,8 +1,8 @@
 # Mawrid
 
-A buyer-side procure-to-pay platform for companies in Saudi Arabia. It covers purchase requisitions, approval matrices, sealed RFQs, purchase orders, goods receipts, and supplier invoices checked by three-way match and ZATCA QR validation.
+A buyer-side procure-to-pay platform for companies in Saudi Arabia. It covers purchase requisitions, approval matrices, sealed RFQs, purchase orders, goods receipts, and supplier invoices. Every invoice is checked with a three-way match and a ZATCA QR check.
 
-> Status: design complete, implementation in progress. See the [delivery plan](docs/DESIGN.md#13-delivery-plan).
+> Status: design done, code in progress. See the [delivery plan](docs/DESIGN.md#13-delivery-plan).
 
 ## Docs
 
@@ -11,6 +11,7 @@ A buyer-side procure-to-pay platform for companies in Saudi Arabia. It covers pu
 - [Glossary (EN/AR)](docs/GLOSSARY.md)
 - [Design review of v1](docs/reviews/2026-11-design-review-v1.md)
 - [Learning notes: NestJS → ASP.NET Core](docs/LEARNING.md)
+- [Contributing and docs style](CONTRIBUTING.md)
 
 ## Tech
 
