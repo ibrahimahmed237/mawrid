@@ -1,16 +1,17 @@
 # Mawrid
 
-A procurement platform for a buyer and its suppliers, built with **ASP.NET Core 8**, **EF Core**, and **SQL Server**.
+A buyer-side procure-to-pay platform for companies in Saudi Arabia. It covers purchase requisitions, approval matrices, sealed RFQs, purchase orders, goods receipts, and supplier invoices checked by three-way match and ZATCA QR validation.
 
-RFQ → Quotation → Award → Purchase Order → Approval → Invoice, with Saudi VAT, ZATCA Phase 1 QR codes, Arabic/English localization, and AI-assisted invoice capture.
-
-> Status: in progress. See the [milestones](docs/DESIGN.md#7-milestones).
+> Status: design complete, implementation in progress. See the [delivery plan](docs/DESIGN.md#13-delivery-plan).
 
 ## Docs
 
-- [Design](docs/DESIGN.md): domain model, rules, architecture, API
-- [Learning notes](docs/LEARNING.md): NestJS → ASP.NET Core concept map
+- [Design](docs/DESIGN.md): context, domain model, architecture, API, operations
+- [Architecture decisions](docs/adr/README.md)
+- [Glossary (EN/AR)](docs/GLOSSARY.md)
+- [Design review of v1](docs/reviews/2026-11-design-review-v1.md)
+- [Learning notes: NestJS → ASP.NET Core](docs/LEARNING.md)
 
 ## Tech
 
-ASP.NET Core 8 · EF Core 8 · SQL Server 2022 · MediatR · FluentValidation · ASP.NET Core Identity + JWT · Hangfire · SignalR · Serilog · xUnit · Testcontainers · Docker · GitHub Actions
+.NET 10 · ASP.NET Core · EF Core 10 · SQL Server 2022 · MediatR 12 · FluentValidation · ASP.NET Core Identity + JWT · Hangfire · SignalR · Serilog · OpenTelemetry · xUnit · Testcontainers · NetArchTest · Docker · GitHub Actions
