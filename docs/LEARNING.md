@@ -115,3 +115,42 @@ sequenceDiagram
 4. What problem does the outbox pattern solve? Why not publish the event right after `SaveChanges`?
 5. How do two outbox workers avoid sending the same message twice?
 6. Why does login for an unknown email still hash a password?
+
+### M3 — Suppliers, files and idempotency
+
+**What we built:** supplier onboarding with documents and a four-eyes bank account rule, file upload to blob storage with safety checks, and `Idempotency-Key` support.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Registered: buyer registers
+  Registered --> UnderReview: supplier uploads 3 documents + bank account, submits
+  UnderReview --> Approved: admin approves (verifies first bank account)
+  UnderReview --> Rejected: admin rejects (reason)
+  Approved --> Blocked: admin blocks (reason)
+  Blocked --> Approved: admin unblocks
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| Value objects as `record` + EF value converters | `VatNumber`, `CrNumber`, `Iban` | A class with a static `create()` and a TypeORM transformer |
+| `OwnsMany` (owned collections) | Supplier documents and bank accounts | A one-to-many relation with cascade |
+| `ComplexProperty` (EF 8+) | Supplier contact stored as columns | An embedded entity (`@Column(() => Contact)`) |
+| `IFormFile` + `[RequestSizeLimit]` | `FilesController` | `@UseInterceptors(FileInterceptor())` with limits |
+| Middleware reading endpoint metadata | `IdempotencyMiddleware` + `[Idempotent]` | An interceptor that reads `Reflector` metadata |
+| Testcontainers for Azurite | `MawridApiFactory` | Same, with the Node library |
+
+**Decisions worth explaining**
+
+- **Invited onboarding, not public sign-up.** Procurement registers the supplier and invites its contact. A public sign-up page would need a way to pick the right buyer organization, and invites are how buyers work with suppliers in practice.
+- **Magic bytes, not file extensions.** We check the first bytes of the file against the declared type. A renamed `.exe` cannot pass as a PDF.
+- **Scanner behind an interface.** Development uses an EICAR test-string detector. Production plugs in a real scanner without code changes.
+- **Contracts between modules.** Identity needs to know if a supplier exists. It asks `ISupplierDirectory` in `Mawrid.Application.Contracts.Suppliers`; an architecture test fails the build if a module reaches into another module's entities.
+- **Idempotency records in their own scope.** The middleware saves records through a separate `DbContext`, so a failed request never leaves half-saved changes behind.
+
+**Likely interview questions**
+
+1. What is a value object? How do you store one with EF Core?
+2. How do you make a POST endpoint safe to retry?
+3. What is the four-eyes principle, and where does it matter in finance?
+4. How do you validate an uploaded file safely?
+5. How do modules in a modular monolith talk to each other without coupling?
