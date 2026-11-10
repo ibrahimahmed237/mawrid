@@ -29,13 +29,13 @@ public static class HealthSetup
         {
             Predicate = _ => false,
             ResponseWriter = WriteJson,
-        });
+        }).AllowAnonymous();
 
         endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains(ReadyTag),
             ResponseWriter = WriteJson,
-        });
+        }).AllowAnonymous();
 
         return endpoints;
     }

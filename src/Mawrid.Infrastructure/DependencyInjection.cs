@@ -1,6 +1,13 @@
 using Mawrid.Application.Common.Abstractions;
+using Mawrid.Application.Common.Persistence;
+using Mawrid.Application.Common.Security;
+using Mawrid.Infrastructure.Identity;
+using Mawrid.Infrastructure.Outbox;
 using Mawrid.Infrastructure.Persistence;
+using Mawrid.Infrastructure.Persistence.Interceptors;
+using Mawrid.Infrastructure.Seeding;
 using Mawrid.Infrastructure.Time;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +18,7 @@ public static class DependencyInjection
 {
     public const string ConnectionStringName = "Default";
 
-    /// <summary>Registers the database, the clock and other infrastructure services.</summary>
+    /// <summary>Registers the database, identity, outbox, clock and other infrastructure services.</summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString(ConnectionStringName);
@@ -22,11 +29,39 @@ public static class DependencyInjection
                 $"Set it with user-secrets or the environment variable ConnectionStrings__{ConnectionStringName}.");
         }
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));
-
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IClock, SystemClock>();
+
+        services.AddScoped<CurrentUserContext>();
+        services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<CurrentUserContext>());
+
+        services.AddScoped<OutboxInterceptor>();
+        services.AddScoped<AuditingInterceptor>();
+        services.AddDbContext<AppDbContext>((sp, options) => options
+            .UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure())
+            // Order matters: events go to the outbox first, then every change is audited.
+            .AddInterceptors(sp.GetRequiredService<OutboxInterceptor>(), sp.GetRequiredService<AuditingInterceptor>()));
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+
+        services.AddIdentityCore<UserCredential>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequiredLength = 10;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            })
+            .AddEntityFrameworkStores<AppDbContext>();
+        services.AddScoped<IIdentityService, IdentityService>();
+
+        services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName).ValidateDataAnnotations().ValidateOnStart();
+        services.AddSingleton<ITokenService, JwtTokenService>();
+
+        services.AddOptions<OutboxOptions>().BindConfiguration(OutboxOptions.SectionName).ValidateDataAnnotations().ValidateOnStart();
+        services.AddSingleton<OutboxProcessor>();
+        services.AddHostedService<OutboxWorker>();
+
+        services.AddOptions<SeedOptions>().BindConfiguration(SeedOptions.SectionName);
 
         return services;
     }

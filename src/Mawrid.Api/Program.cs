@@ -2,9 +2,11 @@ using Mawrid.Api.Common.Correlation;
 using Mawrid.Api.Common.Errors;
 using Mawrid.Api.Common.Health;
 using Mawrid.Api.Common.Observability;
+using Mawrid.Api.Common.Security;
 using Mawrid.Application;
 using Mawrid.Infrastructure;
 using Mawrid.Infrastructure.Persistence;
+using Mawrid.Infrastructure.Seeding;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +17,8 @@ builder.Services
     .AddApiProblemDetails()
     .AddApplication()
     .AddInfrastructure(builder.Configuration)
-    .AddApiHealthChecks();
+    .AddApiHealthChecks()
+    .AddApiAuthentication();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -28,6 +31,9 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     await app.Services.MigrateDatabaseAsync();
 }
 
+// Creates the first organization and admin when "Seed:Bootstrap" is configured. Does nothing if data exists.
+await app.Services.SeedAsync();
+
 // Order matters: the correlation id must exist before anything logs or fails.
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
@@ -36,8 +42,12 @@ app.UseSerilogRequestLogging(options => options.GetLevel = RequestLogLevel.For);
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
+
+app.UseAuthentication();
+app.UseMiddleware<CurrentUserMiddleware>();
+app.UseAuthorization();
 
 app.MapApiHealthChecks();
 app.MapControllers();

@@ -4,7 +4,7 @@ namespace Mawrid.Domain.Common;
 /// Base class for aggregate roots. An aggregate root is the only entry point for
 /// changing the entities inside it, and it collects the domain events it raises.
 /// </summary>
-public abstract class AggregateRoot<TId> : Entity<TId>
+public abstract class AggregateRoot<TId> : Entity<TId>, IHasDomainEvents
     where TId : notnull
 {
     private readonly List<IDomainEvent> _domainEvents = [];

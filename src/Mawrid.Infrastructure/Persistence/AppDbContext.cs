@@ -1,22 +1,90 @@
+using System.Linq.Expressions;
+using Mawrid.Application.Common.Persistence;
+using Mawrid.Domain.Common;
+using Mawrid.Domain.Identity;
+using Mawrid.Infrastructure.Auditing;
+using Mawrid.Infrastructure.Identity;
+using Mawrid.Infrastructure.Outbox;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mawrid.Infrastructure.Persistence;
 
 /// <summary>
-/// The single EF Core context for the app. Each module adds its entity
-/// configurations as <see cref="IEntityTypeConfiguration{TEntity}"/> classes
-/// in this assembly; they are picked up automatically.
+/// The single EF Core context for the app. It also holds the ASP.NET Core Identity
+/// credential tables. Each module adds its entity configurations in this assembly.
 /// </summary>
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options, CurrentUserContext currentUser)
+    : IdentityUserContext<UserCredential, Guid>(options), IAppDbContext
 {
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    /// <summary>Name of the query filter that hides other organizations' data (ADR-0003).</summary>
+    public const string TenantFilter = Application.Common.Persistence.QueryFilters.Tenant;
+
+    public DbSet<Organization> Organizations => Set<Organization>();
+
+    public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+
+    public new DbSet<User> Users => Set<User>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
+    /// <summary>Read by the tenant query filter on every query.</summary>
+    public Guid? CurrentOrganizationId => currentUser.OrganizationId;
+
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        base.OnModelCreating(builder);
+        ConfigureIdentityTables(builder);
+
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        foreach (var entityType in builder.Model.GetEntityTypes().Where(t => !t.IsOwned()).ToList())
+        {
+            var clrType = entityType.ClrType;
+
+            if (typeof(ITenantOwned).IsAssignableFrom(clrType))
+            {
+                builder.Entity(clrType).HasQueryFilter(TenantFilter, BuildTenantFilter(clrType));
+            }
+
+            if (typeof(IHasDomainEvents).IsAssignableFrom(clrType))
+            {
+                var entity = builder.Entity(clrType);
+                entity.Ignore(nameof(AggregateRoot<Guid>.DomainEvents));
+                entity.Property(nameof(AggregateRoot<Guid>.RowVersion)).IsRowVersion();
+                entity.Property<DateTimeOffset>(AuditFields.CreatedAtUtc);
+                entity.Property<Guid?>(AuditFields.CreatedBy);
+                entity.Property<DateTimeOffset>(AuditFields.UpdatedAtUtc);
+                entity.Property<Guid?>(AuditFields.UpdatedBy);
+            }
+        }
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // Money totals use 2 decimals by default. Unit prices override this with 4 (DESIGN 6.8).
         configurationBuilder.Properties<decimal>().HavePrecision(19, 2);
+    }
+
+    /// <summary>Builds <c>e => e.OrganizationId == this.CurrentOrganizationId</c> for one entity type.</summary>
+    private LambdaExpression BuildTenantFilter(Type entityType)
+    {
+        var entity = Expression.Parameter(entityType, "e");
+        var organizationId = Expression.Convert(Expression.Property(entity, nameof(ITenantOwned.OrganizationId)), typeof(Guid?));
+        var current = Expression.Property(Expression.Constant(this), nameof(CurrentOrganizationId));
+        return Expression.Lambda(Expression.Equal(organizationId, current), entity);
+    }
+
+    private static void ConfigureIdentityTables(ModelBuilder builder)
+    {
+        builder.Entity<UserCredential>().ToTable("UserCredentials", Schemas.Identity);
+        builder.Entity<IdentityUserClaim<Guid>>().ToTable("UserCredentialClaims", Schemas.Identity);
+        builder.Entity<IdentityUserLogin<Guid>>().ToTable("UserCredentialLogins", Schemas.Identity);
+        builder.Entity<IdentityUserToken<Guid>>().ToTable("UserCredentialTokens", Schemas.Identity);
     }
 }

@@ -17,6 +17,8 @@ public static class ProblemDetailsSetup
             {
                 problem.Extensions["code"] = problem.Status switch
                 {
+                    StatusCodes.Status401Unauthorized => ErrorCodes.Unauthenticated,
+                    StatusCodes.Status403Forbidden => ErrorCodes.Forbidden,
                     StatusCodes.Status404NotFound => ErrorCodes.NotFound,
                     StatusCodes.Status405MethodNotAllowed => ErrorCodes.MethodNotAllowed,
                     StatusCodes.Status400BadRequest => ErrorCodes.ValidationFailed,
