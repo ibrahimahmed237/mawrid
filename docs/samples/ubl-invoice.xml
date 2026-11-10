@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A small ZATCA-style UBL 2.1 invoice with only the fields Mawrid reads.
+     Change OrderReference/ID to your PO number and CompanyID to the supplier's VAT number.
+     The QR (Base64 TLV) holds: seller name, VAT number, time, total 32660.00, VAT 4260.00. -->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
+  <cbc:ID>INV-1001</cbc:ID>
+  <cbc:IssueDate>2026-11-10</cbc:IssueDate>
+  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
+  <cac:OrderReference><cbc:ID>PO-2026-000001</cbc:ID></cac:OrderReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>QR</cbc:ID>
+    <cac:Attachment>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">ARBBbCBVZnVxIFN1cHBsaWVzAg8zMDAwMDAwMDAwMDAwMDMDFDIwMjYtMTEtMTBUMTA6MDA6MDBaBAgzMjY2MC4wMAUHNDI2MC4wMA==</cbc:EmbeddedDocumentBinaryObject>
+    </cac:Attachment>
+  </cac:AdditionalDocumentReference>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyTaxScheme><cbc:CompanyID>300000000000003</cbc:CompanyID></cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:TaxTotal><cbc:TaxAmount currencyID="SAR">4260.00</cbc:TaxAmount></cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="SAR">28400.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="SAR">28400.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="SAR">32660.00</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="SAR">32660.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="PCE">6</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SAR">23400.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference><cbc:LineID>1</cbc:LineID></cac:OrderLineReference>
+    <cac:TaxTotal><cbc:TaxAmount currencyID="SAR">3510.00</cbc:TaxAmount></cac:TaxTotal>
+    <cac:Item>
+      <cbc:Name>Laptop 14 inch</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID><cbc:Percent>15</cbc:Percent></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="SAR">3900.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="PCE">10</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="SAR">5000.00</cbc:LineExtensionAmount>
+    <cac:OrderLineReference><cbc:LineID>2</cbc:LineID></cac:OrderLineReference>
+    <cac:TaxTotal><cbc:TaxAmount currencyID="SAR">750.00</cbc:TaxAmount></cac:TaxTotal>
+    <cac:Item>
+      <cbc:Name>Docking station</cbc:Name>
+      <cac:ClassifiedTaxCategory><cbc:ID>S</cbc:ID><cbc:Percent>15</cbc:Percent></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="SAR">500.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

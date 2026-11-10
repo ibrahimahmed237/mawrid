@@ -13,3 +13,4 @@ Each record explains one important decision: the context, what we chose, and the
 | [0007](0007-sealed-quotations.md) | Sealed quotations until the RFQ closes | Accepted |
 | [0008](0008-ef-core-in-application-layer.md) | Use EF Core directly in the Application layer | Accepted |
 | [0009](0009-controllers-for-http-endpoints.md) | Use controllers for HTTP endpoints | Accepted |
+| [0010](0010-integration-events-between-modules.md) | Integration events between modules | Accepted |

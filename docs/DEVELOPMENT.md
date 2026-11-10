@@ -91,6 +91,23 @@ hub.on("notification", n => console.log(n.type, n.title, n.path));
 await hub.start();
 ```
 
+## Try invoices and webhooks locally
+
+`docker compose up` also starts a **mock ERP** on port 8090 (`tools/Mawrid.MockErp`). It checks webhook signatures with the secret `whsec_local-development-secret-0123456789`.
+
+1. As `admin@acme.test`, subscribe the mock ERP:
+
+```bash
+curl -s http://localhost:8080/api/v1/webhook-subscriptions -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Mock ERP","url":"http://mock-erp:8090/webhooks",
+       "eventTypes":["purchase_order.approved","supplier_invoice.released"],
+       "secret":"whsec_local-development-secret-0123456789"}'
+```
+
+2. Approve a PO or release an invoice. Within a minute the job sends the webhook. See what arrived: `curl -s http://localhost:8090/webhooks`.
+3. A supplier invoice to start from is in [`docs/samples/ubl-invoice.xml`](samples/ubl-invoice.xml). Change the PO number and VAT number, upload it to `/api/v1/files` as `application/xml`, then post `{"xmlFileId": "<id>"}` to `/api/v1/supplier/invoices`.
+
 ## Run the tests
 
 ```bash
@@ -130,6 +147,8 @@ dotnet ef migrations bundle -p src/Mawrid.Infrastructure -s src/Mawrid.Api -o ef
 | `Jwt:SigningKey` | Secrets | Required. At least 32 characters |
 | `Jwt:AccessTokenMinutes`, `Jwt:RefreshTokenDays` | Settings | Defaults: 15 minutes, 14 days |
 | `Outbox:PollingInterval`, `Outbox:BatchSize`, `Outbox:MaxAttempts` | Settings | Defaults: 2 seconds, 20, 8 |
+| `Webhooks:AllowHttp` | Settings | Allows `http://` webhook URLs. `true` only in Development (for the mock ERP) |
+| `Webhooks:Timeout` | Settings | How long one webhook call may take. Default 10 seconds |
 | `Jobs:Enabled` | Settings | Runs the Hangfire server and its recurring jobs. Default `true`; tests set `false` |
 | `Jobs:OutboxRetention` | Settings | How long processed outbox messages are kept. Default 7 days |
 | `Seed:Bootstrap`, `Seed:DemoData` | Settings | First organization and admin; demo data (Development only) |

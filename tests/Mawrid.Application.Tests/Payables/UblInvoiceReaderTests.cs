@@ -90,4 +90,23 @@ public class UblInvoiceReaderTests
     {
         Read("%PDF-1.7 not xml").Error.Should().Be(PayablesErrors.SourceFileInvalid);
     }
+
+    [Fact]
+    public void The_sample_in_the_docs_is_a_valid_matching_invoice()
+    {
+        var root = new DirectoryInfo(AppContext.BaseDirectory);
+        while (!File.Exists(Path.Combine(root.FullName, "Mawrid.slnx")))
+        {
+            root = root.Parent!;
+        }
+
+        using var file = File.OpenRead(Path.Combine(root.FullName, "docs", "samples", "ubl-invoice.xml"));
+        var invoice = UblInvoiceReader.Read(file).Value;
+        var qr = ZatcaQr.Decode(invoice.Details.QrCode).Value;
+
+        invoice.Details.Lines.Should().HaveCount(2);
+        qr.Total.Should().Be(invoice.Details.Total);
+        qr.VatTotal.Should().Be(invoice.Details.VatTotal);
+        invoice.Details.Lines.Sum(l => l.NetAmount).Should().Be(invoice.Details.NetTotal);
+    }
 }

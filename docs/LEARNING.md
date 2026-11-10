@@ -281,3 +281,48 @@ sequenceDiagram
 3. How do recurring jobs work in a multi-tenant system without leaking data?
 4. What happens to your app when the database is down at startup?
 5. Hangfire vs a `BackgroundService` vs a message broker: when do you pick each?
+
+### M7 — Payables and ERP webhooks
+
+**What we built:** supplier invoices from ZATCA UBL XML (or typed in from a PDF), the QR check, the three-way match with holds and overrides, automatic rechecks, release for payment, and signed webhooks to the ERP.
+
+```mermaid
+flowchart LR
+  X[UBL XML] --> R[UblInvoiceReader]
+  R --> I[SupplierInvoice: Received]
+  PO[PO lines + accepted qty] --> C[InvoiceChecker]
+  S[Supplier VAT + bank status] --> C
+  I --> C
+  C -->|no findings| M[Matched]
+  C -->|findings| H[OnHold]
+  H -->|goods received / bank verified: recheck| C
+  H -->|override with reason| M
+  M -->|release| P[ReleasedForPayment] --> W[Webhook to ERP]
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| `XDocument` + `XmlReaderSettings` (no DTD) | `UblInvoiceReader` | `fast-xml-parser` with entity processing off |
+| `HMACSHA256.HashData`, `CryptographicOperations.FixedTimeEquals` | `WebhookSignature` | `crypto.createHmac`, `crypto.timingSafeEqual` |
+| Typed `HttpClient` from `IHttpClientFactory` | `HttpWebhookSender` | `HttpModule` / `HttpService` from `@nestjs/axios` |
+| ASP.NET Core Data Protection | Webhook secrets encrypted at rest | `crypto.createCipheriv` with a key from a secret store |
+| A pure static checker | `InvoiceChecker.Check(invoice, context)` | A plain function, unit tested without Nest |
+| In-process integration events | `GoodsReceivedIntegrationEvent` | `EventEmitter2` events between modules |
+
+**Decisions worth explaining**
+
+- **The checker is a pure function.** The handler loads the PO, supplier and settings, and the domain decides. All the money rules are unit tested without a database (`InvoiceTests`).
+- **Store what the supplier said, compare with what we calculate.** We keep the supplier's line amounts and totals as given. If we recalculated them on intake, we would hide the supplier's mistakes instead of holding the invoice.
+- **Not every hold can be overridden.** A missing QR can be accepted with a reason. Invoicing more than was received cannot: receive the goods, and the hold clears by itself. Price differences need an admin.
+- **Counting other invoices, not only released ones.** The quantity check adds this supplier's other non-rejected invoices for the PO. Two invoices for the same goods cannot both match, even before either is released.
+- **Safe XML.** DTDs are refused, so XXE and "billion laughs" attacks cannot load files or explode memory. Tested with a real XXE payload.
+- **Webhooks are retried from a table, not in memory.** Each delivery is a row with its attempts, next attempt time and last error. The body is built once, so a retry or a replay sends the same bytes, and the receiver can ignore a delivery id it has seen.
+- **Integration events between modules** ([ADR-0010](adr/0010-integration-events-between-modules.md)). Purchasing announces "goods received" with ids only; Payables decides what to do.
+
+**Likely interview questions**
+
+1. Explain a three-way match. Which tolerances would you allow, and who can override them?
+2. How do you parse untrusted XML safely in .NET?
+3. How does a webhook receiver know a call really came from you, and is not a replay?
+4. How do you retry outgoing HTTP calls without losing them when the app restarts?
+5. Why is the invoice checker a pure function, and how does that help testing?

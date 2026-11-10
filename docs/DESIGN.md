@@ -248,23 +248,43 @@ stateDiagram-v2
 
 **`SupplierInvoice`** (aggregate)
 
-- Fields: supplier invoice number, issue date, PO reference, lines, VAT breakdown, totals, source files (XML/PDF), decoded QR.
-- Status: `Received → Validating → Matched | OnHold → ReleasedForPayment`, or `Rejected`.
-- **Duplicate check:** unique `(OrganizationId, SupplierId, SupplierInvoiceNumber)`.
-- **Checks** ([ADR-0006](adr/0006-buyer-side-invoice-ingestion.md)) create a list of `HoldReason { Code, LineRef?, Expected, Actual }`:
+- Fields: supplier invoice number, issue date, PO, lines (each refers to one PO line), totals as the supplier stated them, source files (XML/PDF), QR text, holds.
+- **Intake:** the supplier uploads a ZATCA UBL 2.1 XML file (the main path), or an AP clerk types in an invoice that came only as a PDF. The checks run at once.
+- **Intake refuses** (no invoice is created): an unreadable file, a seller VAT number in the XML that is not the sender's, a PO that was not sent to this supplier, and a duplicate number. **Duplicate check:** unique `(OrganizationId, SupplierId, SupplierInvoiceNumber)`.
 
-| Code | Fails when |
-|---|---|
-| `qr.missing` / `qr.malformed` | There is no QR, or the TLV is invalid |
-| `qr.vat_mismatch` | The QR seller VAT number is not the supplier's VAT number |
-| `qr.total_mismatch` | The QR totals do not match the invoice totals |
-| `vat.calculation` | Line VAT ≠ line net × rate, by more than 0.01 SAR per line |
-| `match.price` | Invoice unit price is higher than the PO unit price by more than the price tolerance (default 2%, and at most 500 SAR per line) |
-| `match.quantity` | Total invoiced quantity is more than the accepted received quantity |
-| `supplier.bank_unverified` | The supplier's bank account is waiting for verification |
+```mermaid
+stateDiagram-v2
+  [*] --> Received: XML upload or typed in
+  Received --> Matched: checks pass
+  Received --> OnHold: checks find problems
+  OnHold --> Matched: problem fixed (recheck) or overridden
+  Matched --> OnHold: recheck finds a new problem
+  Matched --> ReleasedForPayment: AP releases
+  Received --> Rejected
+  OnHold --> Rejected
+  Matched --> Rejected
+```
 
-- An AP clerk fixes a hold in one of three ways: correct the data, ask the supplier for a credit note (later milestone), or override with a reason. An override above tolerance needs approval.
-- **VAT rates have start dates** (`VatRate { Category, Rate, ValidFrom }`), so old documents still calculate correctly.
+- **Checks** ([ADR-0006](adr/0006-buyer-side-invoice-ingestion.md)) produce holds `{ Code, LineNumber?, Expected, Actual }`. Differences of up to 0.01 SAR are rounding.
+
+| Code | Fails when | Override |
+|---|---|---|
+| `qr.missing` / `qr.malformed` | There is no QR, or the TLV is invalid | AP clerk, with a reason |
+| `qr.vat_mismatch` | The QR seller VAT number is not the supplier's VAT number | AP clerk |
+| `qr.total_mismatch` | The QR totals do not match the invoice totals | AP clerk |
+| `line.amount` | Line net ≠ quantity × unit price | AP clerk |
+| `vat.calculation` | Line VAT ≠ line net × rate (rate by issue date) | AP clerk |
+| `totals.mismatch` | Invoice totals ≠ sum of the lines | AP clerk |
+| `match.price` | The extra cost on a line is more than the price tolerance: 2% of the PO line, and at most 500 SAR | **Admin only** |
+| `match.quantity` | This invoice plus the supplier's other non-rejected invoices for the line are more than the accepted quantity | No: receive the goods |
+| `match.line_unknown` | The invoice refers to a line the PO does not have | No: reject |
+| `supplier.bank_unverified` | The supplier's new bank account waits for verification | No: verify the account |
+
+- **Rechecks happen by themselves** when the cause may be fixed: when goods are received for the PO, or when the supplier's bank account is verified. An override is kept if exactly the same problem comes back.
+- **Release** records the invoiced quantities on the PO in the same transaction, and sends `supplier_invoice.released` to the ERP. A typed-in invoice needs a second person to release it.
+- **The supplier sees** `InReview`, `ReleasedForPayment` or `Rejected` with the reason, not the internal hold details.
+- **VAT rates have start dates** (`VatRates`), so old documents still calculate correctly.
+- Not yet: credit notes, and approvals for overrides (today an admin override is the control).
 
 ### 6.8 Money and time
 
@@ -320,16 +340,37 @@ flowchart LR
 - A `BackgroundService` reads the outbox and publishes each event to the module handlers.
 - **Notifications:** each module has handlers that pick the recipients (for example the supplier's users when a PO is sent). `INotificationSender` sends through every channel: SignalR and email (an interface; development writes to the log). A failing channel is logged and skipped.
 - **Hangfire** runs recurring jobs: closing RFQs, document expiry warnings, approval reminders and clean-up. Each job sends a system command once per organization, so the tenant filter works as in a request.
-- **ERP webhooks** (M7) will be one more outbox consumer.
+- **Integration events** carry facts between modules without sharing entities ([ADR-0010](adr/0010-integration-events-between-modules.md)): for example a goods receipt makes Payables check held invoices again.
+- **ERP webhooks** are queued by an outbox handler and sent by a Hangfire job (section 7.4).
 
 ### 7.4 Integrations
 
 | Integration | Approach |
 |---|---|
-| ERP (outbound) | Webhooks for `purchase_order.approved` and `supplier_invoice.released`. Signed with HMAC-SHA256 (`X-Mawrid-Signature`), retried with backoff, saved in a delivery log, can be replayed by hand. A mock receiver lives in `tools/` |
-| ERP (inbound) | Import cost centers by CSV upload or API |
-| File storage | `IFileStorage`: Azure Blob in production, Azurite locally. Read links expire quickly. Allowed file types and size limit. Files are blocked until the virus scan passes |
+| ERP (outbound) | Webhooks for `purchase_order.approved` and `supplier_invoice.released`, see below. A mock receiver lives in `tools/Mawrid.MockErp` |
+| ERP (inbound) | Import cost centers by CSV upload or API (later) |
+| File storage | `IFileStorage`: Azure Blob in production, Azurite locally. Allowed file types and size limit. Files are blocked until the virus scan passes |
 | AI extraction | `IInvoiceExtractor`, behind a typed `HttpClient` with timeout, retry and circuit breaker. It returns typed JSON with a confidence score per field. The result is **always** a draft that a person must confirm |
+
+**Webhooks**
+
+```mermaid
+sequenceDiagram
+  participant M as Mawrid (outbox handler)
+  participant D as WebhookDeliveries table
+  participant J as Hangfire job (every minute)
+  participant E as ERP
+  M->>D: one row per subscription (same body for every retry)
+  J->>D: read due rows
+  J->>E: POST body + X-Mawrid-Signature
+  E-->>J: 2xx (done) or error (retry 1, 2, 4 ... min, 8 tries)
+  Note over D: Failed rows can be replayed by an admin
+```
+
+- Headers: `X-Mawrid-Event`, `X-Mawrid-Delivery` (the receiver uses it to ignore duplicates), `X-Mawrid-Timestamp` (Unix seconds) and `X-Mawrid-Signature: sha256=<hex HMAC-SHA256(secret, "{timestamp}.{body}")>`.
+- Body: `{ "id", "type", "occurredAtUtc", "data": { ... } }` in camelCase.
+- The secret is shown once (or chosen by the admin). At rest it is encrypted with ASP.NET Core Data Protection; the keys live in the database so every instance can read them.
+- URLs must be HTTPS (plain HTTP only with `Webhooks:AllowHttp` in development).
 
 ## 8. Data
 
@@ -373,12 +414,14 @@ RFQs            POST /rfqs · PUT /rfqs/{id} · POST /rfqs/{id}/publish · /amen
 POs             GET /purchase-orders · POST /purchase-orders (direct purchase)
                 PUT /purchase-orders/{id}/terms · POST /purchase-orders/{id}/submit · /send · /cancel · /close
 Receipts        POST /purchase-orders/{id}/receipts
-Invoices        GET /invoices?status=OnHold · POST /invoices/{id}/resolve · /release
+Invoices        GET /invoices?status=OnHold · POST /invoices (typed in) · POST /invoices/{id}/overrides
+                POST /invoices/{id}/recheck · /release · /reject
 Supplier portal POST /supplier/register · PUT /supplier/profile · POST /supplier/documents
                 GET /supplier/rfqs · PUT /supplier/rfqs/{id}/quotation
                 GET /supplier/purchase-orders · POST /supplier/purchase-orders/{id}/acknowledge
-                POST /supplier/invoices (XML/PDF upload) · POST /supplier/invoices/extract
-Webhooks        CRUD /webhook-subscriptions · GET /webhook-deliveries
+                GET /supplier/invoices · POST /supplier/invoices (XML/PDF file ids) · POST /supplier/invoices/extract
+Webhooks        GET, POST, PUT /webhook-subscriptions · POST /webhook-subscriptions/{id}/rotate-secret
+                GET /webhook-deliveries
                 POST /webhook-deliveries/{id}/replay
 Ops             GET /health/live · /health/ready · WS /hubs/notifications
 ```
