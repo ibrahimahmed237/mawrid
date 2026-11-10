@@ -6,7 +6,7 @@ My notes while building Mawrid. I come from Node.js, NestJS and TypeScript. Most
 
 | NestJS / Node | ASP.NET Core / .NET | Notes |
 |---|---|---|
-| `package.json` / npm | `.csproj` + NuGet (`dotnet add package`) | A solution (`.sln`) groups several projects, like a monorepo with workspaces |
+| `package.json` / npm | `.csproj` + NuGet (`dotnet add package`) | A solution (`.slnx`) groups several projects, like a monorepo with workspaces |
 | `main.ts` bootstrap | `Program.cs` (minimal hosting) | `builder.Services...` = providers, `app.Use...` = middleware |
 | `@Module({ providers })` | `IServiceCollection` extension methods (`AddApplication()`, `AddInfrastructure()`) | No module decorators. Each layer has one `Add*` method |
 | `@Injectable()` + constructor injection | Constructor injection, registered as `AddScoped/AddTransient/AddSingleton` | Scoped = one instance per HTTP request. It is cheap, and it is the default for DbContext |

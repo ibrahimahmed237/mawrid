@@ -26,3 +26,12 @@ The domain words we use in the code, the API and the UI. The code uses the Engli
 | FATOORA | فاتورة | — | ZATCA's e-invoicing program and platform |
 | Clearance | الاعتماد (التخليص) | — | ZATCA validating a B2B invoice before it is shared with the buyer |
 | Tolerance | نسبة التجاوز المسموح | `MatchTolerance` | Allowed price or quantity difference before an invoice is held |
+| Direct purchase | الشراء المباشر | `SourcingRoute.DirectPurchase` | Buying a small requisition from one supplier without an RFQ, under the direct purchase limit |
+| Single-source reason | مبرر المورد الوحيد | `SingleSourceReason` | Why an RFQ invites fewer suppliers than the minimum |
+| Acknowledgement | تأكيد استلام أمر الشراء | `PurchaseOrderStatus.Acknowledged` | The supplier confirms it received the PO |
+| Short close | الإقفال الجزئي | `PurchaseOrder.ClosedReason` | Closing a partly received PO because the rest will not come |
+| Override | تجاوز الحجز بمبرر | `InvoiceHold.OverrideReason` | Accepting one invoice hold with a written reason |
+| Recheck | إعادة الفحص | `RecheckInvoiceCommand` | Running the invoice checks again after the cause may be fixed |
+| E-invoice (UBL) | الفاتورة الإلكترونية | `UblInvoiceReader` | The supplier's ZATCA invoice as UBL 2.1 XML |
+| Webhook | إشعار آلي للنظام المحاسبي | `WebhookDelivery` | A signed HTTP call that tells the ERP about an approved PO or a released invoice |
+
