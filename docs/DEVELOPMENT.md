@@ -56,6 +56,7 @@ In Development the app creates the organization **Acme Trading** with two cost c
 | `requester@acme.test` | Requester for `IT-001` |
 | `receiver@acme.test` | Receiver |
 | `ap@acme.test` | AP clerk |
+| `cfo@acme.test` | Approver (all cost centers), CFO step |
 
 Log in and call the API:
 
@@ -68,6 +69,27 @@ curl -s http://localhost:8080/api/v1/me -H "Authorization: Bearer $TOKEN"
 ```
 
 In production, set `Seed:Bootstrap` (organization name, admin email and password) once to create the first organization and admin. Keep `Seed:DemoData` off.
+
+## Background jobs and notifications
+
+**Hangfire** runs the recurring jobs below. It keeps its tables in the `hangfire` schema of the same database. In Development, `docker compose up` is enough; the jobs are scheduled at startup.
+
+| Job | When (Asia/Riyadh) | What it does |
+|---|---|---|
+| `rfqs-close-due` | Every 5 minutes | Closes RFQs past their deadline and tells the buyer |
+| `suppliers-document-expiry` | Daily 06:00 | Warns when a supplier document expires in 30 or 7 days, or expired |
+| `approvals-reminders` | Sunday–Thursday 08:00 | Reminds approvers about steps waiting a day or more |
+| `clean-up` | Daily 03:30 | Deletes old outbox messages and expired idempotency records |
+
+**Notifications** go out by email and SignalR. Development email is written to the log (`Email to ...`). Clients connect to `/hubs/notifications?access_token=<JWT>` and listen for `notification`:
+
+```js
+const hub = new signalR.HubConnectionBuilder()
+  .withUrl("/hubs/notifications", { accessTokenFactory: () => token })
+  .build();
+hub.on("notification", n => console.log(n.type, n.title, n.path));
+await hub.start();
+```
 
 ## Run the tests
 
@@ -108,6 +130,8 @@ dotnet ef migrations bundle -p src/Mawrid.Infrastructure -s src/Mawrid.Api -o ef
 | `Jwt:SigningKey` | Secrets | Required. At least 32 characters |
 | `Jwt:AccessTokenMinutes`, `Jwt:RefreshTokenDays` | Settings | Defaults: 15 minutes, 14 days |
 | `Outbox:PollingInterval`, `Outbox:BatchSize`, `Outbox:MaxAttempts` | Settings | Defaults: 2 seconds, 20, 8 |
+| `Jobs:Enabled` | Settings | Runs the Hangfire server and its recurring jobs. Default `true`; tests set `false` |
+| `Jobs:OutboxRetention` | Settings | How long processed outbox messages are kept. Default 7 days |
 | `Seed:Bootstrap`, `Seed:DemoData` | Settings | First organization and admin; demo data (Development only) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Environment | Turns on trace and metric export |
 

@@ -205,20 +205,44 @@ Example default matrix:
 **`PurchaseOrder`** (aggregate)
 
 - Fields: supplier, lines (from the award or directly from the PR), delivery address, payment terms, totals.
-- Status: `Draft → PendingApproval → Approved → Sent → Acknowledged → PartiallyReceived → Received → Closed`, or `Cancelled`.
+- A PO comes from an RFQ award, or from a small requisition routed to direct purchase.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft: award or direct purchase
+  Draft --> PendingApproval: submit
+  PendingApproval --> Draft: rejected (reason kept)
+  PendingApproval --> Approved: last step approves
+  Approved --> Sent: send
+  Sent --> Acknowledged: supplier confirms
+  Sent --> PartiallyReceived: receipt
+  Acknowledged --> PartiallyReceived: receipt
+  PartiallyReceived --> Received: all accepted
+  Received --> Closed: fully invoiced
+  PartiallyReceived --> Closed: short close (reason)
+  Draft --> Cancelled
+  PendingApproval --> Cancelled
+  Approved --> Cancelled
+  Sent --> Cancelled
+  Acknowledged --> Cancelled
+```
 
 | Rule | Detail |
 |---|---|
-| Submit | Starts an approval request using the PO policy |
+| Submit | Starts an approval request using the PO policy, for the total including VAT |
 | Supplier | Must still be allowed to win awards when the PO is submitted |
-| Cancel | Only before anything is received |
-| Close | When fully received **and** fully invoiced, or closed by hand with a reason |
+| Direct purchase | Every requisition line gets a price; the real net total must stay within the direct purchase limit |
+| Cancel | Only before anything is received. A pending approval is cancelled too |
+| Close | When fully received **and** fully invoiced, or "short closed" with a reason when partly received |
+| Receive | Receiver role only. The buyer who created the PO cannot receive it (segregation of duties) |
+| Visibility | A supplier sees its own POs only after they are sent, without internal fields |
+| Concurrency | Every state change accepts `If-Match`; a stale version gives `412` |
 | Totals | Calculated in the domain, line by line: VAT per line, rounded half away from zero to 2 decimals |
 
-**`GoodsReceipt`** (aggregate)
+**Goods receipt** (part of the PO aggregate)
 
-- Each line has quantity received, quantity rejected, and a reason.
-- The total received quantity can never be more than the ordered quantity plus the over-delivery tolerance (default 0%).
+- Each line has the quantity accepted, the quantity rejected, and a reason for any rejection.
+- The total accepted quantity can never be more than the ordered quantity plus the over-delivery tolerance (default 0%).
 
 ### 6.7 Payables
 
@@ -283,9 +307,20 @@ Queries skip steps 3 and 4. They read with `AsNoTracking()` and map straight to 
 
 Side effects use the transactional outbox ([ADR-0004](adr/0004-transactional-outbox.md)):
 
-- A `BackgroundService` reads and processes the outbox.
-- **Hangfire** runs scheduled jobs: closing RFQs, document expiry warnings, approval reminders and outbox cleanup.
-- **Consumers:** SignalR notifier, email sender (an interface; development writes to a log), ERP webhook sender.
+```mermaid
+flowchart LR
+  H[Command handler] -->|SaveChanges: data + events| DB[(SQL Server)]
+  DB -->|OutboxWorker reads| W[Outbox worker]
+  W -->|MediatR publish| N[Module event handlers]
+  N --> E[Email]
+  N --> S[SignalR /hubs/notifications]
+  HF[Hangfire jobs] -->|system commands per organization| H
+```
+
+- A `BackgroundService` reads the outbox and publishes each event to the module handlers.
+- **Notifications:** each module has handlers that pick the recipients (for example the supplier's users when a PO is sent). `INotificationSender` sends through every channel: SignalR and email (an interface; development writes to the log). A failing channel is logged and skipped.
+- **Hangfire** runs recurring jobs: closing RFQs, document expiry warnings, approval reminders and clean-up. Each job sends a system command once per organization, so the tenant filter works as in a request.
+- **ERP webhooks** (M7) will be one more outbox consumer.
 
 ### 7.4 Integrations
 
@@ -335,12 +370,13 @@ Suppliers       GET /suppliers · POST /suppliers/{id}/approve · /block
 RFQs            POST /rfqs · PUT /rfqs/{id} · POST /rfqs/{id}/publish · /amend · /cancel
                 GET /rfqs/{id}/submissions   (who and when, before close)
                 GET /rfqs/{id}/comparison    (after close) · POST /rfqs/{id}/award
-POs             GET /purchase-orders · POST /purchase-orders/{id}/submit · /send · /cancel
+POs             GET /purchase-orders · POST /purchase-orders (direct purchase)
+                PUT /purchase-orders/{id}/terms · POST /purchase-orders/{id}/submit · /send · /cancel · /close
 Receipts        POST /purchase-orders/{id}/receipts
 Invoices        GET /invoices?status=OnHold · POST /invoices/{id}/resolve · /release
 Supplier portal POST /supplier/register · PUT /supplier/profile · POST /supplier/documents
                 GET /supplier/rfqs · PUT /supplier/rfqs/{id}/quotation
-                POST /supplier/purchase-orders/{id}/acknowledge
+                GET /supplier/purchase-orders · POST /supplier/purchase-orders/{id}/acknowledge
                 POST /supplier/invoices (XML/PDF upload) · POST /supplier/invoices/extract
 Webhooks        CRUD /webhook-subscriptions · GET /webhook-deliveries
                 POST /webhook-deliveries/{id}/replay

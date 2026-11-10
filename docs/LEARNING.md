@@ -234,3 +234,50 @@ stateDiagram-v2
 3. How do you keep several aggregates consistent in one request?
 4. Why can EF Core send an `UPDATE` for a row you meant to insert?
 5. What audit trail does a public-sector-style tender need?
+
+### M6 — Purchasing, notifications and background jobs
+
+**What we built:** the purchase order life cycle (approval, send, supplier acknowledgement, goods receipts, close), direct purchases for small requisitions, email and SignalR notifications from outbox events, and Hangfire jobs.
+
+```mermaid
+sequenceDiagram
+  participant B as Buyer
+  participant API as Mawrid API
+  participant OB as Outbox worker
+  participant S as Supplier user
+  participant R as Receiver
+  B->>API: POST /purchase-orders/{id}/send
+  API-->>B: 204 (PO + PurchaseOrderSent event in one transaction)
+  OB->>API: read event, run PurchasingNotifications
+  OB-->>S: SignalR "notification" + email
+  S->>API: POST /supplier/purchase-orders/{id}/acknowledge
+  R->>API: POST /purchase-orders/{id}/receipts
+  OB-->>B: "PO-... partly received"
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| SignalR hub + `IHubContext<T>` | `NotificationsHub`, `SignalRNotificationChannel` | `@WebSocketGateway()` with Socket.IO |
+| `IUserIdProvider` | Hub addresses users by the JWT `sub` claim | Socket.IO rooms named by user id |
+| Hangfire recurring jobs | `MawridJobs`, `RecurringJobSchedule` | `@nestjs/schedule` cron, or BullMQ repeatable jobs |
+| `BackgroundService` with retry | `RecurringJobRegistration` | A provider with `onApplicationBootstrap` and a retry loop |
+| `IEnumerable<INotificationChannel>` | Email + SignalR, one interface | Injecting an array of providers under one token |
+| `INotificationHandler<T>` per module | `PurchasingNotifications`, `SourcingNotifications` | `@OnEvent()` listeners |
+
+**Decisions worth explaining**
+
+- **Notifications come from the outbox, not from the request.** The handler saves the PO and the event together. The notification is sent later by the worker, so an email is never sent for a change that rolled back, and a slow mail server never slows the API.
+- **Notifications are best effort.** If SignalR or email fails, the sender logs it and goes on. The business change is already saved; a missed email must not retry the whole event.
+- **Jobs run once per organization, as the system.** The runner opens a scope per organization and calls `RunAsSystem(orgId)`. The tenant filter works exactly as in a request, so job code has no special "all tenants" queries. Commands check `IsSystem`, so a person cannot call them.
+- **No automatic retries for jobs.** Each job runs again on its next schedule. A retry could send the same reminder twice.
+- **The app starts even when SQL Server is down.** Jobs are scheduled from a background service that retries, so `/health/live` stays green and `/health/ready` reports the problem.
+- **The buyer cannot receive their own order.** Placing an order and confirming its delivery are separate duties, like requesting and approving. It protects the three-way match in M7.
+- **Short close.** A supplier sometimes cannot deliver the rest. The buyer closes a partly received PO with a reason instead of cancelling it.
+
+**Likely interview questions**
+
+1. How do you send real-time updates to one user in ASP.NET Core?
+2. Why send notifications from an outbox instead of directly from the API call?
+3. How do recurring jobs work in a multi-tenant system without leaking data?
+4. What happens to your app when the database is down at startup?
+5. Hangfire vs a `BackgroundService` vs a message broker: when do you pick each?
