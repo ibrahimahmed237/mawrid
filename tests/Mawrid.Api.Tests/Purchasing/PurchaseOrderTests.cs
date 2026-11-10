@@ -138,6 +138,18 @@ public sealed class PurchaseOrderTests(MawridApiFactory factory)
     }
 
     [Fact]
+    public async Task Another_organization_cannot_see_or_change_the_po()
+    {
+        var flow = await PurchasingFlow.StartAsync(factory);
+        var id = await flow.DraftPurchaseOrderAsync();
+        var other = await ApprovalFlow.StartAsync(factory, withPolicy: false);
+
+        (await other.Buyer.GetAsync($"/api/v1/purchase-orders/{id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        await (await other.Buyer.PostAsync($"/api/v1/purchase-orders/{id}/submit", null))
+            .ShouldBeProblemAsync(HttpStatusCode.NotFound, "purchase_order.not_found");
+    }
+
+    [Fact]
     public async Task Receipts_need_the_receiver_role_and_respect_the_ordered_quantity()
     {
         var flow = await PurchasingFlow.StartAsync(factory);
