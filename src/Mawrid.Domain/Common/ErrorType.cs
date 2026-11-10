@@ -1,0 +1,20 @@
+namespace Mawrid.Domain.Common;
+
+/// <summary>The kind of an expected failure. The API maps each kind to an HTTP status.</summary>
+public enum ErrorType
+{
+    /// <summary>The input is invalid. HTTP 400.</summary>
+    Validation,
+
+    /// <summary>The caller is not allowed to do this. HTTP 403.</summary>
+    Forbidden,
+
+    /// <summary>The thing does not exist (or the caller cannot see it). HTTP 404.</summary>
+    NotFound,
+
+    /// <summary>The request conflicts with the current state, such as a duplicate. HTTP 409.</summary>
+    Conflict,
+
+    /// <summary>A business rule says no, such as "the RFQ deadline has passed". HTTP 422.</summary>
+    RuleViolation,
+}
