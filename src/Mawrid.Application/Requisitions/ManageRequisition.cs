@@ -69,8 +69,7 @@ internal sealed class CreateRequisitionCommandHandler(
         var details = RequisitionMapping.ToDetails(command.Title, command.Justification, command.NeededBy, command.Lines);
 
         // Check the details before taking a number, so invalid input does not use one up.
-        var check = PurchaseRequisition.CreateDraft(currentUser.OrganizationId!.Value, "PR-CHECK", currentUser.UserId!.Value,
-            command.CostCenterId, details, clock.Today);
+        var check = PurchaseRequisition.ValidateDetails(details, clock.Today);
         if (check.IsFailure)
         {
             return check.Error!;

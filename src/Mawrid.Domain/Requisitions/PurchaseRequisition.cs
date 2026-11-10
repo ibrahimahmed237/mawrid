@@ -190,8 +190,29 @@ public sealed class PurchaseRequisition : AggregateRoot<Guid>, ITenantOwned
         return Result.Success();
     }
 
+    /// <summary>Checks requisition details without creating anything (used before taking a document number).</summary>
+    public static Result ValidateDetails(RequisitionDetails details, DateOnly today) =>
+        BuildLines(details, today, out _);
+
     private Result ApplyDetails(RequisitionDetails details, DateOnly today)
     {
+        var check = BuildLines(details, today, out var lines);
+        if (check.IsFailure)
+        {
+            return check;
+        }
+
+        Title = details.Title.Trim();
+        Justification = details.Justification.Trim();
+        NeededBy = details.NeededBy;
+        _lines.Clear();
+        _lines.AddRange(lines);
+        return Result.Success();
+    }
+
+    private static Result BuildLines(RequisitionDetails details, DateOnly today, out List<RequisitionLine> lines)
+    {
+        lines = [];
         var title = details.Title?.Trim() ?? string.Empty;
         var justification = details.Justification?.Trim() ?? string.Empty;
 
@@ -215,23 +236,18 @@ public sealed class PurchaseRequisition : AggregateRoot<Guid>, ITenantOwned
             return RequisitionErrors.LinesRequired;
         }
 
-        var lines = new List<RequisitionLine>();
         for (var i = 0; i < details.Lines.Count; i++)
         {
             var line = RequisitionLine.Create(i + 1, details.Lines[i]);
             if (line.IsFailure)
             {
+                lines = [];
                 return line.Error!;
             }
 
             lines.Add(line.Value);
         }
 
-        Title = title;
-        Justification = justification;
-        NeededBy = details.NeededBy;
-        _lines.Clear();
-        _lines.AddRange(lines);
         return Result.Success();
     }
 }
