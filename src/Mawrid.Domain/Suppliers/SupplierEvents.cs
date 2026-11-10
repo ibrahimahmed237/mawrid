@@ -1,0 +1,19 @@
+using Mawrid.Domain.Common;
+
+namespace Mawrid.Domain.Suppliers;
+
+public sealed record SupplierRegistered(Guid SupplierId, Guid OrganizationId) : IDomainEvent;
+
+public sealed record SupplierSubmittedForReview(Guid SupplierId, Guid OrganizationId) : IDomainEvent;
+
+public sealed record SupplierApproved(Guid SupplierId, Guid OrganizationId) : IDomainEvent;
+
+public sealed record SupplierRejected(Guid SupplierId, Guid OrganizationId) : IDomainEvent;
+
+public sealed record SupplierBlocked(Guid SupplierId, Guid OrganizationId) : IDomainEvent;
+
+public sealed record SupplierUnblocked(Guid SupplierId, Guid OrganizationId) : IDomainEvent;
+
+public sealed record SupplierBankAccountRequested(Guid SupplierId, Guid OrganizationId, Guid BankAccountId) : IDomainEvent;
+
+public sealed record SupplierBankAccountVerified(Guid SupplierId, Guid OrganizationId, Guid BankAccountId) : IDomainEvent;
