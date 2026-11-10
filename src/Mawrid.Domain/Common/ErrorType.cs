@@ -6,6 +6,9 @@ public enum ErrorType
     /// <summary>The input is invalid. HTTP 400.</summary>
     Validation,
 
+    /// <summary>The caller is not logged in, or the credentials are wrong. HTTP 401.</summary>
+    Unauthorized,
+
     /// <summary>The caller is not allowed to do this. HTTP 403.</summary>
     Forbidden,
 

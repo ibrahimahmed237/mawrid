@@ -7,6 +7,7 @@ public class ResultHttpExtensionsTests
 {
     [Theory]
     [InlineData(ErrorType.Validation, 400)]
+    [InlineData(ErrorType.Unauthorized, 401)]
     [InlineData(ErrorType.Forbidden, 403)]
     [InlineData(ErrorType.NotFound, 404)]
     [InlineData(ErrorType.Conflict, 409)]
