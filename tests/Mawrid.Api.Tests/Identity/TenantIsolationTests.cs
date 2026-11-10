@@ -1,3 +1,4 @@
+using Mawrid.Domain.Common;
 using System.Net;
 using Mawrid.Api.Tests.Infrastructure;
 using Mawrid.Application.Common.Paging;

@@ -1,3 +1,4 @@
+using Mawrid.Domain.Common;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -26,7 +27,7 @@ public class ErrorResponsesTests(MawridApiFactory factory)
     {
         var organizationId = await factory.CreateOrganizationAsync();
         var email = TestData.UniqueEmail();
-        await factory.CreateUserAsync(organizationId, email, Domain.Identity.Role.Buyer);
+        await factory.CreateUserAsync(organizationId, email, Domain.Common.Role.Buyer);
         var client = await factory.CreateClientForAsync(email);
 
         var response = await client.GetAsync("/does-not-exist");

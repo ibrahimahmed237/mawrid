@@ -12,7 +12,7 @@ public class ModuleTests
     private static readonly Assembly DomainAssembly = typeof(Domain.AssemblyReference).Assembly;
     private static readonly Assembly ApplicationAssembly = typeof(Application.AssemblyReference).Assembly;
 
-    private static readonly string[] ModuleNames = ["Identity", "Suppliers", "Files"];
+    private static readonly string[] ModuleNames = ["Identity", "Suppliers", "Files", "Approvals", "Requisitions"];
 
     public static TheoryData<string> Modules => new(ModuleNames);
 

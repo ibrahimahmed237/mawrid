@@ -1,3 +1,4 @@
+using Mawrid.Domain.Common;
 using System.Net;
 using System.Net.Http.Json;
 using Mawrid.Api.Tests.Infrastructure;
