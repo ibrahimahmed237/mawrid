@@ -4,6 +4,7 @@ using Mawrid.Api.Common.Idempotency;
 using Mawrid.Api.Common.Security;
 using Mawrid.Application.Common.Paging;
 using Mawrid.Application.Payables;
+using Mawrid.Application.Payables.Extraction;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,6 +37,17 @@ public sealed class InvoicesController : ApiControllerBase
         var result = await Sender.Send(command, cancellationToken);
         return result.IsSuccess ? CreatedAtAction(nameof(Get), new { id = result.Value }, new CreatedId(result.Value)) : result.Error!.ToActionResult();
     }
+
+    public sealed record ExtractRequest(Guid PdfFileId, Guid? PurchaseOrderId);
+
+    /// <summary>
+    /// Reads a PDF invoice with AI and returns a draft with a confidence per value. Nothing is saved:
+    /// check the draft, then post it to <c>POST /invoices</c> with <c>extractedWithAi: true</c>.
+    /// </summary>
+    [HttpPost("extract")]
+    [ProducesResponseType<InvoiceDraftDto>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Extract(ExtractRequest request, CancellationToken cancellationToken) =>
+        OkOrProblem(await Sender.Send(new ExtractInvoiceCommand(request.PdfFileId, request.PurchaseOrderId), cancellationToken));
 
     [HttpPost("{id:guid}/recheck")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

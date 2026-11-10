@@ -12,6 +12,8 @@
     <PackageReference Include="Hangfire.AspNetCore" />
     <PackageReference Include="Hangfire.Core" />
     <PackageReference Include="Hangfire.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="PdfPig" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Mawrid.Api.Tests" />

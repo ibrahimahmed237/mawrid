@@ -5,7 +5,9 @@ using Mawrid.Application.Common.Notifications;
 using Mawrid.Application.Common.Persistence;
 using Mawrid.Application.Common.Security;
 using Mawrid.Application.Files;
+using Mawrid.Application.Payables.Extraction;
 using Mawrid.Application.Integrations;
+using Mawrid.Infrastructure.AiExtraction;
 using Mawrid.Infrastructure.Files;
 using Mawrid.Infrastructure.Identity;
 using Mawrid.Infrastructure.Jobs;
@@ -22,6 +24,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 
 namespace Mawrid.Infrastructure;
@@ -94,8 +97,31 @@ public static class DependencyInjection
         services.AddSingleton<IWebhookSecrets, DataProtectionWebhookSecrets>();
         services.AddHttpClient<IWebhookSender, HttpWebhookSender>();
 
+        AddAiExtraction(services);
         AddJobs(services, configuration, connectionString);
         return services;
+    }
+
+    /// <summary>
+    /// AI invoice extraction through an OpenAI-compatible API. The standard resilience handler adds
+    /// retries with backoff, a circuit breaker and timeouts, sized for slow model answers.
+    /// </summary>
+    private static void AddAiExtraction(IServiceCollection services)
+    {
+        services.AddOptions<AiExtractionOptions>().BindConfiguration(AiExtractionOptions.SectionName);
+        services.AddSingleton<IPdfTextReader, PdfPigTextReader>();
+        // The resilience pipeline owns the timeouts, so the client's own 100-second limit is turned off.
+        var resilience = services.AddHttpClient<ILlmClient, OpenAiCompatibleLlmClient>(client => client.Timeout = Timeout.InfiniteTimeSpan)
+            .AddStandardResilienceHandler();
+        services.AddOptions<HttpStandardResilienceOptions>(resilience.PipelineName)
+            .Configure<IOptions<AiExtractionOptions>>((pipeline, ai) =>
+            {
+                var attempt = ai.Value.AttemptTimeout;
+                pipeline.AttemptTimeout.Timeout = attempt;
+                pipeline.TotalRequestTimeout.Timeout = attempt * 3;
+                pipeline.CircuitBreaker.SamplingDuration = attempt * 2;
+                pipeline.Retry.MaxRetryAttempts = 2;
+            });
     }
 
     /// <summary>Hangfire keeps its queues in the same database, in the "hangfire" schema.</summary>

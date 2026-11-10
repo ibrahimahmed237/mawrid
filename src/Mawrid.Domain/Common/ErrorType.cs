@@ -23,4 +23,7 @@ public enum ErrorType
 
     /// <summary>The client's copy is out of date (If-Match did not match). HTTP 412.</summary>
     Precondition,
+
+    /// <summary>A service we depend on (for example the AI provider) is not answering. HTTP 503.</summary>
+    Unavailable,
 }

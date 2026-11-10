@@ -69,7 +69,10 @@ internal sealed class SubmitInvoiceCommandHandler(
 
 public sealed record InvoiceLineDto(int PoLineNumber, string Description, decimal Quantity, decimal UnitPrice, string VatCategory, decimal NetAmount, decimal VatAmount);
 
-/// <summary>An AP clerk types in an invoice that arrived only as a PDF (M8 will pre-fill it with AI).</summary>
+/// <summary>
+/// An AP clerk types in an invoice that arrived only as a PDF, often from an AI draft
+/// (<c>POST /invoices/extract</c>). Set <see cref="ExtractedWithAi"/> when the values came from a draft.
+/// </summary>
 public sealed record EnterInvoiceCommand(
     Guid PurchaseOrderId,
     string SupplierInvoiceNumber,
@@ -79,7 +82,8 @@ public sealed record EnterInvoiceCommand(
     decimal VatTotal,
     decimal Total,
     string? QrCode,
-    Guid PdfFileId) : ICommand<Guid>;
+    Guid PdfFileId,
+    bool ExtractedWithAi = false) : ICommand<Guid>;
 
 internal sealed class EnterInvoiceCommandValidator : AbstractValidator<EnterInvoiceCommand>
 {
@@ -128,7 +132,8 @@ internal sealed class EnterInvoiceCommandHandler(
             command.Total,
             command.QrCode);
 
-        return await InvoiceIntake.ReceiveAsync(db, checks, clock, order, details, InvoiceSource.Manual,
+        var source = command.ExtractedWithAi ? InvoiceSource.AiAssisted : InvoiceSource.Manual;
+        return await InvoiceIntake.ReceiveAsync(db, checks, clock, order, details, source,
             null, command.PdfFileId, currentUser, cancellationToken);
     }
 }

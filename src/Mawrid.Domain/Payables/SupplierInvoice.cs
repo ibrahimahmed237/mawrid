@@ -197,7 +197,7 @@ public sealed class SupplierInvoice : AggregateRoot<Guid>, ITenantOwned
             return PayablesErrors.InvalidStatusChange(Status, InvoiceStatus.ReleasedForPayment);
         }
 
-        if (Source == InvoiceSource.Manual && by == ReceivedBy)
+        if (Source is (InvoiceSource.Manual or InvoiceSource.AiAssisted) && by == ReceivedBy)
         {
             return PayablesErrors.SamePersonCannotRelease;
         }
@@ -261,6 +261,9 @@ public enum InvoiceSource
 
     /// <summary>An AP clerk typed it in from a PDF.</summary>
     Manual = 2,
+
+    /// <summary>An AP clerk confirmed a draft that AI read from a PDF.</summary>
+    AiAssisted = 3,
 }
 
 /// <param name="SupplierInvoiceNumber">The supplier's invoice number.</param>

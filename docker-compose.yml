@@ -57,6 +57,18 @@ services:
     ports:
       - "8090:8090"
 
+  # Optional local AI for invoice extraction: docker compose --profile ai up
+  # then: docker compose exec ollama ollama pull qwen2.5:3b
+  # and set AiExtraction__Provider=Ollama, AiExtraction__BaseUrl=http://ollama:11434/v1 on the api.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
 volumes:
+  ollama-data:
   sqlserver-data:
   azurite-data:

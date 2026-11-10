@@ -35,4 +35,6 @@ public sealed record Error
     public static Error RuleViolation(string code, string message) => new(code, message, ErrorType.RuleViolation);
 
     public static Error Precondition(string code, string message) => new(code, message, ErrorType.Precondition);
+
+    public static Error Unavailable(string code, string message) => new(code, message, ErrorType.Unavailable);
 }
