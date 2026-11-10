@@ -1,0 +1,47 @@
+# Local development stack: the API, SQL Server and Azurite (Azure Blob Storage emulator).
+# Start everything:      docker compose up --build
+# Only the dependencies: docker compose up sqlserver azurite
+name: mawrid
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      # Local development password only. Override it with an .env file.
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Mawrid_Dev_Passw0rd}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    command: azurite-blob --blobHost 0.0.0.0 --loose
+    ports:
+      - "10000:10000"
+    volumes:
+      - azurite-data:/data
+
+  api:
+    build: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=Mawrid;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Mawrid_Dev_Passw0rd};TrustServerCertificate=True"
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+
+volumes:
+  sqlserver-data:
+  azurite-data:
