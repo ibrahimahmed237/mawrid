@@ -1,4 +1,7 @@
+using Mawrid.Domain.Common;
 using Mawrid.Application.Common.Security;
+using Mawrid.Application.Contracts.Approvals;
+using Mawrid.Domain.Approvals;
 using Mawrid.Domain.Identity;
 using Mawrid.Infrastructure.Identity;
 using Mawrid.Infrastructure.Persistence;
@@ -69,15 +72,46 @@ public static partial class DataSeeder
             ("requester@acme.test", "Omar Requester", [new RoleAssignment(Role.Requester, it.Id)]),
             ("receiver@acme.test", "Fahad Receiver", [new RoleAssignment(Role.Receiver)]),
             ("ap@acme.test", "Reem AP Clerk", [new RoleAssignment(Role.ApClerk)]),
+            ("cfo@acme.test", "Hassan CFO", [new RoleAssignment(Role.Approver)]),
         ];
 
+        var ids = new Dictionary<string, Guid>();
         foreach (var (email, name, roles) in users)
         {
-            await AddUserAsync(db, identity, organizationId, email, name, DemoPassword, roles, cancellationToken);
+            ids[email] = await AddUserAsync(db, identity, organizationId, email, name, DemoPassword, roles, cancellationToken);
         }
+
+        await db.SaveChangesAsync(cancellationToken);
+        await AddDemoApprovalMatrixAsync(db, organizationId, ids["director@acme.test"], ids["cfo@acme.test"], cancellationToken);
     }
 
-    private static async Task AddUserAsync(
+    /// <summary>The default matrix from DESIGN section 6.3, for requisitions and purchase orders.</summary>
+    private static async Task AddDemoApprovalMatrixAsync(
+        AppDbContext db, Guid organizationId, Guid directorId, Guid cfoId, CancellationToken cancellationToken)
+    {
+        var directors = ApproverGroup.Create(organizationId, "Department directors", [directorId]).Value;
+        var cfo = ApproverGroup.Create(organizationId, "CFO", [cfoId]).Value;
+        db.ApproverGroups.AddRange(directors, cfo);
+
+        var manager = new ApprovalStepTemplate("Cost center manager", ApprovalStepKind.CostCenterApprovers);
+        var director = new ApprovalStepTemplate("Department director", ApprovalStepKind.Group, directors.Id);
+        var chiefFinance = new ApprovalStepTemplate("CFO", ApprovalStepKind.Group, cfo.Id);
+        ApprovalRule[] rules =
+        [
+            new(10_000m, [manager]),
+            new(100_000m, [manager, director]),
+            new(null, [manager, director, chiefFinance]),
+        ];
+
+        foreach (var documentType in ApprovalDocumentTypes.All)
+        {
+            db.ApprovalPolicies.Add(ApprovalPolicy.Create(organizationId, documentType, rules).Value);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task<Guid> AddUserAsync(
         AppDbContext db, IIdentityService identity, Guid organizationId, string email, string name, string password,
         RoleAssignment[] roles, CancellationToken cancellationToken)
     {
@@ -88,6 +122,8 @@ public static partial class DataSeeder
         {
             throw new InvalidOperationException($"Seeding user '{email}' failed: {result.Error!.Message}");
         }
+
+        return user.Id;
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Created organization {OrganizationName} and its admin")]

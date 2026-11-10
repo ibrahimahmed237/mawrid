@@ -58,6 +58,15 @@ public static class ApprovalErrors
     public static readonly Error CommentTooLong =
         Error.Validation("approval.comment_too_long", $"The comment can be at most {ApprovalRequest.CommentMaxLength} characters.");
 
+    public static readonly Error GroupMembersInvalid =
+        Error.Validation("approver_group.members_invalid", "Every member must be an active employee of this organization.");
+
+    public static readonly Error DelegateNotFound =
+        Error.NotFound("delegation.delegate_not_found", "The delegate must be an active employee of this organization.");
+
+    public static readonly Error ConcurrentDecision =
+        Error.Conflict("approval.concurrent_decision", "Someone else decided this step at the same moment. Reload to see the result.");
+
     public static readonly Error StaleVersion =
         Error.Precondition("approval.stale_version", "The approval changed since you loaded it. Reload and try again.");
 

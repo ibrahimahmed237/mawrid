@@ -1,6 +1,7 @@
 using Mawrid.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Mawrid.Api.Common.Errors;
 
@@ -33,6 +34,17 @@ public sealed partial class GlobalExceptionHandler(
                 Detail = validation.Message,
             };
             problem.Extensions["code"] = ErrorCodes.ValidationFailed;
+        }
+        else if (exception is DbUpdateConcurrencyException)
+        {
+            // Two people saved the same record at the same time. Not a bug; the second one must reload.
+            problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = "The record was changed by someone else. Reload it and try again.",
+            };
+            problem.Extensions["code"] = ErrorCodes.ConcurrencyConflict;
         }
         else
         {

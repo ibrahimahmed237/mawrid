@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddSingleton<IMalwareScanner, EicarTestScanner>();
 
         services.AddSingleton<Idempotency.IdempotencyStore>();
+        services.AddScoped<IDocumentNumbers, Numbering.DocumentNumbers>();
 
         return services;
     }

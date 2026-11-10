@@ -1,4 +1,5 @@
 ﻿using System;
+using Mawrid.Domain.Common;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable

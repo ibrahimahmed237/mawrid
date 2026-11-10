@@ -1,8 +1,11 @@
 using System.Linq.Expressions;
 using Mawrid.Application.Common.Persistence;
+using Mawrid.Domain.Approvals;
 using Mawrid.Domain.Common;
 using Mawrid.Domain.Files;
 using Mawrid.Domain.Identity;
+using Mawrid.Domain.Requisitions;
+using Mawrid.Infrastructure.Numbering;
 using Mawrid.Domain.Suppliers;
 using Mawrid.Infrastructure.Auditing;
 using Mawrid.Infrastructure.Identity;
@@ -34,6 +37,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
     public DbSet<StoredFile> Files => Set<StoredFile>();
 
     public DbSet<Supplier> Suppliers => Set<Supplier>();
+
+    public DbSet<ApprovalPolicy> ApprovalPolicies => Set<ApprovalPolicy>();
+
+    public DbSet<ApproverGroup> ApproverGroups => Set<ApproverGroup>();
+
+    public DbSet<ApprovalDelegation> ApprovalDelegations => Set<ApprovalDelegation>();
+
+    public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
+
+    public DbSet<PurchaseRequisition> Requisitions => Set<PurchaseRequisition>();
+
+    public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 

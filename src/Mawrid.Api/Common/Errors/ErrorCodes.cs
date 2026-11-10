@@ -10,4 +10,5 @@ public static class ErrorCodes
     public const string Forbidden = "auth.forbidden";
     public const string MethodNotAllowed = "request.method_not_allowed";
     public const string Http = "request.http_error";
+    public const string ConcurrencyConflict = "concurrency.conflict";
 }

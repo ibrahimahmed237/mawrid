@@ -7,4 +7,6 @@ public static class Schemas
     public const string Platform = "platform";
     public const string Files = "files";
     public const string Suppliers = "suppliers";
+    public const string Approvals = "approvals";
+    public const string Requisitions = "requisitions";
 }

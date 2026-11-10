@@ -1,4 +1,5 @@
-namespace Mawrid.Domain.Identity;
+// Roles are shared by every module for authorization, so they live in the shared kernel.
+namespace Mawrid.Domain.Common;
 
 /// <summary>What a user is allowed to do. See the personas in DESIGN section 3.</summary>
 public enum Role

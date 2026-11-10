@@ -24,6 +24,9 @@ public static class DependencyInjection
         // Interfaces that one module publishes for other modules.
         services.AddScoped<Contracts.Files.IFileReferences, Files.FileReferences>();
         services.AddScoped<Contracts.Suppliers.ISupplierDirectory, Suppliers.SupplierDirectory>();
+        services.AddScoped<Contracts.Identity.IOrganizationDirectory, Identity.OrganizationDirectory>();
+        services.AddScoped<Contracts.Approvals.IApprovalService, Approvals.ApprovalService>();
+        services.AddScoped<Contracts.Approvals.IApprovalDocumentHandler, Requisitions.RequisitionApprovalHandler>();
 
         return services;
     }

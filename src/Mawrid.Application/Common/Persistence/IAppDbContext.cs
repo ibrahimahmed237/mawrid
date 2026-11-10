@@ -1,5 +1,7 @@
+using Mawrid.Domain.Approvals;
 using Mawrid.Domain.Files;
 using Mawrid.Domain.Identity;
+using Mawrid.Domain.Requisitions;
 using Mawrid.Domain.Suppliers;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +24,16 @@ public interface IAppDbContext
     DbSet<StoredFile> Files { get; }
 
     DbSet<Supplier> Suppliers { get; }
+
+    DbSet<ApprovalPolicy> ApprovalPolicies { get; }
+
+    DbSet<ApproverGroup> ApproverGroups { get; }
+
+    DbSet<ApprovalDelegation> ApprovalDelegations { get; }
+
+    DbSet<ApprovalRequest> ApprovalRequests { get; }
+
+    DbSet<PurchaseRequisition> Requisitions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -1,3 +1,4 @@
+using Mawrid.Domain.Common;
 using Mawrid.Domain.Identity;
 using Mawrid.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;

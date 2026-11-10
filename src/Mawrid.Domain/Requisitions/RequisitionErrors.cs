@@ -22,6 +22,9 @@ public static class RequisitionErrors
     public static readonly Error NotFound =
         Error.NotFound("requisition.not_found", "The requisition was not found.");
 
+    public static readonly Error CostCenterNotFound =
+        Error.NotFound("requisition.cost_center_not_found", "The cost center was not found or is inactive.");
+
     public static readonly Error NotRequesterOfCostCenter =
         Error.Forbidden("requisition.not_requester", "You are not a requester for this cost center.");
 

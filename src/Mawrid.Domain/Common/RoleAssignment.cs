@@ -1,4 +1,4 @@
-namespace Mawrid.Domain.Identity;
+namespace Mawrid.Domain.Common;
 
 /// <summary>
 /// A role given to a user, optionally limited to one cost center.

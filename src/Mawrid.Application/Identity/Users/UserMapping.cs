@@ -1,3 +1,4 @@
+using Mawrid.Domain.Common;
 using Mawrid.Domain.Identity;
 
 namespace Mawrid.Application.Identity.Users;

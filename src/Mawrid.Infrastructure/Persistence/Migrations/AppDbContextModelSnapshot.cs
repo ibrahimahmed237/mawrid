@@ -23,6 +23,214 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Mawrid.Domain.Approvals.ApprovalDelegation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FromUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("ToUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("ValidTo")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ToUserId", "ValidFrom", "ValidTo");
+
+                    b.ToTable("ApprovalDelegations", "approvals");
+                });
+
+            modelBuilder.Entity("Mawrid.Domain.Approvals.ApprovalPolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("_rules")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Rules");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId", "DocumentType")
+                        .IsUnique();
+
+                    b.ToTable("ApprovalPolicies", "approvals");
+                });
+
+            modelBuilder.Entity("Mawrid.Domain.Approvals.ApprovalRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("CostCenterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DocumentTitle")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("RequestedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("RequestedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentType", "DocumentId");
+
+                    b.HasIndex("OrganizationId", "Status");
+
+                    b.ToTable("ApprovalRequests", "approvals");
+                });
+
+            modelBuilder.Entity("Mawrid.Domain.Approvals.ApproverGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.PrimitiveCollection<string>("MemberUserIds")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ApproverGroups", "approvals");
+                });
+
             modelBuilder.Entity("Mawrid.Domain.Files.StoredFile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -172,6 +380,39 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uniqueidentifier");
 
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Settings", "Mawrid.Domain.Identity.Organization.Settings#ProcurementSettings", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<decimal>("DirectPurchaseLimit")
+                                .HasPrecision(19, 2)
+                                .HasColumnType("decimal(19,2)")
+                                .HasColumnName("DirectPurchaseLimit");
+
+                            b1.Property<int>("MinimumRfqWindowDays")
+                                .HasColumnType("int")
+                                .HasColumnName("MinimumRfqWindowDays");
+
+                            b1.Property<int>("MinimumSuppliersPerRfq")
+                                .HasColumnType("int")
+                                .HasColumnName("MinimumSuppliersPerRfq");
+
+                            b1.Property<decimal>("OverDeliveryPercent")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("OverDeliveryPercent");
+
+                            b1.Property<decimal>("PriceToleranceMaxAmount")
+                                .HasPrecision(19, 2)
+                                .HasColumnType("decimal(19,2)")
+                                .HasColumnName("PriceToleranceMaxAmount");
+
+                            b1.Property<decimal>("PriceTolerancePercent")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)")
+                                .HasColumnName("PriceTolerancePercent");
+                        });
+
                     b.HasKey("Id");
 
                     b.ToTable("Organizations", "identity");
@@ -271,6 +512,86 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.ToTable("Users", "identity");
+                });
+
+            modelBuilder.Entity("Mawrid.Domain.Requisitions.PurchaseRequisition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ApprovalRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CostCenterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Justification")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateOnly>("NeededBy")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SingleSourceReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SourcingRoute")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("OrganizationId", "RequesterId");
+
+                    b.ToTable("PurchaseRequisitions", "requisitions");
                 });
 
             modelBuilder.Entity("Mawrid.Domain.Suppliers.Supplier", b =>
@@ -523,6 +844,26 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                     b.ToTable("UserCredentials", "identity");
                 });
 
+            modelBuilder.Entity("Mawrid.Infrastructure.Numbering.DocumentSequence", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Prefix")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LastValue")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrganizationId", "Prefix", "Year");
+
+                    b.ToTable("DocumentSequences", "platform");
+                });
+
             modelBuilder.Entity("Mawrid.Infrastructure.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -638,6 +979,54 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                     b.ToTable("UserCredentialTokens", "identity");
                 });
 
+            modelBuilder.Entity("Mawrid.Domain.Approvals.ApprovalRequest", b =>
+                {
+                    b.OwnsMany("Mawrid.Domain.Approvals.ApprovalStep", "Steps", b1 =>
+                        {
+                            b1.Property<Guid>("ApprovalRequestId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<int>("Order")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Comment")
+                                .HasMaxLength(500)
+                                .HasColumnType("nvarchar(500)");
+
+                            b1.Property<DateTimeOffset?>("DecidedAtUtc")
+                                .HasColumnType("datetimeoffset");
+
+                            b1.Property<Guid?>("DecidedBy")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.PrimitiveCollection<string>("EligibleApproverIds")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("nvarchar(100)");
+
+                            b1.Property<Guid?>("OnBehalfOf")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Status")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("nvarchar(20)");
+
+                            b1.HasKey("ApprovalRequestId", "Order");
+
+                            b1.ToTable("ApprovalSteps", "approvals");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ApprovalRequestId");
+                        });
+
+                    b.Navigation("Steps");
+                });
+
             modelBuilder.Entity("Mawrid.Domain.Identity.CostCenter", b =>
                 {
                     b.HasOne("Mawrid.Domain.Identity.Organization", null)
@@ -664,7 +1053,7 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsMany("Mawrid.Domain.Identity.RoleAssignment", "Roles", b1 =>
+                    b.OwnsMany("Mawrid.Domain.Common.RoleAssignment", "Roles", b1 =>
                         {
                             b1.Property<int>("Id")
                                 .ValueGeneratedOnAdd()
@@ -694,6 +1083,48 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Roles");
+                });
+
+            modelBuilder.Entity("Mawrid.Domain.Requisitions.PurchaseRequisition", b =>
+                {
+                    b.OwnsMany("Mawrid.Domain.Requisitions.RequisitionLine", "Lines", b1 =>
+                        {
+                            b1.Property<Guid>("RequisitionId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<int>("LineNumber")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Description")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("nvarchar(500)");
+
+                            b1.Property<decimal>("EstimatedUnitPrice")
+                                .HasPrecision(19, 4)
+                                .HasColumnType("decimal(19,4)");
+
+                            b1.Property<Guid?>("PreferredSupplierId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("Quantity")
+                                .HasPrecision(18, 3)
+                                .HasColumnType("decimal(18,3)");
+
+                            b1.Property<string>("Unit")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("nvarchar(20)");
+
+                            b1.HasKey("RequisitionId", "LineNumber");
+
+                            b1.ToTable("RequisitionLines", "requisitions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RequisitionId");
+                        });
+
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Mawrid.Domain.Suppliers.Supplier", b =>

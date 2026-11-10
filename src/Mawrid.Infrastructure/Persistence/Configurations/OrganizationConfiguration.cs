@@ -11,5 +11,15 @@ internal sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organ
         builder.ToTable("Organizations", Schemas.Identity);
         builder.Property(o => o.Id).ValueGeneratedNever();
         builder.Property(o => o.Name).HasMaxLength(Organization.NameMaxLength).IsRequired();
+
+        builder.ComplexProperty(o => o.Settings, settings =>
+        {
+            settings.Property(s => s.DirectPurchaseLimit).HasColumnName("DirectPurchaseLimit");
+            settings.Property(s => s.MinimumSuppliersPerRfq).HasColumnName("MinimumSuppliersPerRfq");
+            settings.Property(s => s.MinimumRfqWindowDays).HasColumnName("MinimumRfqWindowDays");
+            settings.Property(s => s.PriceTolerancePercent).HasColumnName("PriceTolerancePercent").HasPrecision(5, 2);
+            settings.Property(s => s.PriceToleranceMaxAmount).HasColumnName("PriceToleranceMaxAmount");
+            settings.Property(s => s.OverDeliveryPercent).HasColumnName("OverDeliveryPercent").HasPrecision(5, 2);
+        });
     }
 }

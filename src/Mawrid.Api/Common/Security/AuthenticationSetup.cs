@@ -1,3 +1,4 @@
+using Mawrid.Domain.Common;
 using Mawrid.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;

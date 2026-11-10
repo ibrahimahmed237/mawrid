@@ -1,3 +1,4 @@
+using Mawrid.Domain.Common;
 using Mawrid.Api.Common;
 using Mawrid.Api.Common.Errors;
 using Mawrid.Api.Common.Security;
