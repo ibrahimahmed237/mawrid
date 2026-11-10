@@ -15,6 +15,12 @@ flowchart LR
   OK -->|signed webhook| ERP[ERP]
 ```
 
+## Demo
+
+One purchase from request to payment: real API calls against SQL Server, recorded from an integration test (2 minutes).
+
+![Mawrid demo: requisition, approval matrix, sealed RFQ, PO, goods receipt, invoice hold, release and ERP webhook](docs/media/demo.gif)
+
 ## What it does
 
 - **Approvals:** a configurable matrix by amount and cost center, approver groups, delegation, and separation of duties.
