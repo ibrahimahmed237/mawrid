@@ -368,3 +368,41 @@ sequenceDiagram
 3. What does `AddStandardResilienceHandler` add, and why change its timeouts for a model?
 4. How do you test code that calls an AI service?
 5. What is prompt injection, and how did you limit its impact here?
+
+### M9 — Production hardening
+
+**What we built:** rate limits, security headers, an OpenAPI contract test, a health check for a late outbox, the migration bundle in CI, and a load smoke test.
+
+```mermaid
+flowchart LR
+  R[Request] --> H[Security headers]
+  H --> A[Authentication]
+  A --> L{Rate limit policy?}
+  L -->|over the limit| T[429 + Retry-After]
+  L -->|ok| E[Endpoint]
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| `AddRateLimiter` + `[EnableRateLimiting]` | `RateLimits`: login per IP, portal and AI per user | `@nestjs/throttler` with `@Throttle()` |
+| `Response.OnStarting` middleware | `SecurityHeadersMiddleware` | `helmet()` |
+| `AddOpenApi` + document transformer | Title, description, bearer scheme | `@nestjs/swagger` `DocumentBuilder` |
+| `IHealthCheck` returning `Degraded` | `OutboxHealthCheck` | `@nestjs/terminus` custom indicator |
+| `dotnet ef migrations bundle` | CI artifact `efbundle` | Running `prisma migrate deploy` in the pipeline |
+| `WithWebHostBuilder` | A second app with strict limits, same containers | Building a second Nest testing module |
+
+**Decisions worth explaining**
+
+- **Different limits for different risks.** Login is limited per IP (password guessing). The supplier portal and AI extraction are limited per user (outside users, and each AI call costs money).
+- **The contract test fails on purpose.** Any change to an endpoint or DTO changes the OpenAPI snapshot. The reviewer sees the contract change in the diff, and the author accepts it with `UPDATE_SNAPSHOTS=1`.
+- **Degraded, not unhealthy.** A late outbox means notifications are slow; the API still works. Kubernetes keeps sending traffic, and monitoring raises an alert.
+- **Migrations are a deploy step.** CI builds a self-contained bundle. Production never migrates on startup: several instances starting at once would race, and the app account should not have rights to change the schema.
+- **A small load test is enough here.** The volumes are small (DESIGN section 4). The smoke test proves there is no obvious slow query or lock, and it can run after every deploy.
+
+**Likely interview questions**
+
+1. How do you protect a login endpoint against password guessing?
+2. Which security headers does an API need, and why `no-store`?
+3. How do you stop accidental breaking changes to a public API?
+4. How do you run EF Core migrations safely in production?
+5. Liveness vs readiness: what goes in each, and what does "degraded" mean?

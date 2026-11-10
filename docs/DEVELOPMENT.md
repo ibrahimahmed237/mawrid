@@ -131,6 +131,20 @@ dotnet test Mawrid.slnx
 
 If your Docker cannot pull the Testcontainers helper image (`testcontainers/ryuk`), set `TESTCONTAINERS_RYUK_DISABLED=true`.
 
+**API contract.** `OpenApiContractTests` compares `/openapi/v1.json` with `tests/Mawrid.Api.Tests/Contract/openapi.v1.json`. When you change an endpoint or a DTO on purpose, accept the new contract and commit it:
+
+```bash
+UPDATE_SNAPSHOTS=1 dotnet test tests/Mawrid.Api.Tests --filter OpenApiContract
+```
+
+**Load smoke test.** With the app running (`docker compose up`):
+
+```bash
+dotnet run --project tools/Mawrid.LoadSmoke -- http://localhost:8080 20 30 500   # users, seconds, p95 limit in ms
+```
+
+It logs in as the demo buyer, reads lists with 20 parallel users and fails if p95 is over the limit or more than 1% of requests fail.
+
 ## Database migrations
 
 Migrations live in `src/Mawrid.Infrastructure/Persistence/Migrations`. `dotnet-ef` is a local tool:
@@ -160,6 +174,7 @@ dotnet ef migrations bundle -p src/Mawrid.Infrastructure -s src/Mawrid.Api -o ef
 | `AiExtraction:Provider` | Settings | `Pollinations` (default, free, no key), `Ollama` or `OpenAI` |
 | `AiExtraction:BaseUrl`, `AiExtraction:Model` | Settings | Override the provider's URL and model |
 | `AiExtraction:ApiKey` | Secrets | Only for OpenAI |
+| `RateLimits:LoginPerMinute`, `RateLimits:SupplierPerMinute`, `RateLimits:AiExtractionPerMinute` | Settings | Defaults: 10, 120, 10. Tests raise them |
 | `Jobs:Enabled` | Settings | Runs the Hangfire server and its recurring jobs. Default `true`; tests set `false` |
 | `Jobs:OutboxRetention` | Settings | How long processed outbox messages are kept. Default 7 days |
 | `Seed:Bootstrap`, `Seed:DemoData` | Settings | First organization and admin; demo data (Development only) |
