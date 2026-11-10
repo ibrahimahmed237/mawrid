@@ -25,6 +25,9 @@ jobs:
       - name: Build (warnings are errors)
         run: dotnet build Mawrid.slnx -c Release --no-restore
 
+      - name: Check formatting
+        run: dotnet format Mawrid.slnx --verify-no-changes --no-restore
+
       # Api tests start SQL Server in Docker with Testcontainers; the runner has Docker.
       - name: Test
         run: >
