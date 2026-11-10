@@ -16,6 +16,8 @@ public sealed class UnreachableDatabaseTests : IClassFixture<UnreachableDatabase
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
+            builder.UseSetting("Jwt:SigningKey", Infrastructure.MawridApiFactory.TestSigningKey);
+            builder.UseSetting("Outbox:Enabled", "false");
             builder.UseSetting(
                 "ConnectionStrings:Default",
                 "Server=127.0.0.1,1;Database=Mawrid;User Id=sa;Password=x;TrustServerCertificate=True;Connect Timeout=2");

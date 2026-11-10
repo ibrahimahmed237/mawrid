@@ -10,15 +10,29 @@ namespace Mawrid.Api.Tests.Common;
 public class ErrorResponsesTests(MawridApiFactory factory)
 {
     [Fact]
-    public async Task Unknown_route_returns_problem_details_with_code_and_trace_id()
+    public async Task Anonymous_request_to_an_unknown_route_gets_401_without_revealing_routes()
     {
         var response = await factory.CreateClient().GetAsync("/does-not-exist");
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
         var problem = await ReadJson(response);
-        problem.GetProperty("code").GetString().Should().Be("request.not_found");
+        problem.GetProperty("code").GetString().Should().Be("auth.unauthenticated");
         problem.GetProperty("traceId").GetString().Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Authenticated_request_to_an_unknown_route_gets_404()
+    {
+        var organizationId = await factory.CreateOrganizationAsync();
+        var email = TestData.UniqueEmail();
+        await factory.CreateUserAsync(organizationId, email, Domain.Identity.Role.Buyer);
+        var client = await factory.CreateClientForAsync(email);
+
+        var response = await client.GetAsync("/does-not-exist");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await ReadJson(response)).GetProperty("code").GetString().Should().Be("request.not_found");
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
 
@@ -14,6 +15,7 @@ namespace Mawrid.Api.Tests.Infrastructure;
 public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public const string SqlServerImage = "mcr.microsoft.com/mssql/server:2022-latest";
+    public const string TestSigningKey = "integration-tests-signing-key-0123456789abcdef";
 
     private readonly MsSqlContainer _sqlServer = new MsSqlBuilder(SqlServerImage).Build();
 
@@ -36,8 +38,17 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", ConnectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
+        builder.UseSetting("Jwt:SigningKey", TestSigningKey);
+
+        // Tests run the outbox processor by hand, so results are deterministic.
+        builder.UseSetting("Outbox:Enabled", "false");
+
         builder.ConfigureTestServices(services =>
-            services.AddControllers().AddApplicationPart(typeof(MawridApiFactory).Assembly));
+        {
+            services.AddControllers().AddApplicationPart(typeof(MawridApiFactory).Assembly);
+            services.AddSingleton<EventRecorder>();
+            services.AddTransient(typeof(INotificationHandler<>), typeof(RecordingEventHandler<>));
+        });
     }
 }
 

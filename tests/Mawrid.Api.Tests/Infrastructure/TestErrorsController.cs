@@ -1,12 +1,14 @@
 using Mawrid.Api.Common.Errors;
 using Mawrid.Application.Common.Exceptions;
 using Mawrid.Domain.Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Mawrid.Api.Tests.Infrastructure;
 
 /// <summary>Test-only endpoints that fail on purpose, to test the error pipeline.</summary>
 [ApiController]
+[AllowAnonymous]
 [Route("_test/errors")]
 public sealed class TestErrorsController : ControllerBase
 {
