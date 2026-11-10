@@ -29,10 +29,22 @@ internal sealed class GetFileContentQueryHandler(IAppDbContext db, IFileStorage 
     }
 }
 
-internal sealed class FileReferences(IAppDbContext db, ICurrentUser currentUser) : IFileReferences
+internal sealed class FileReferences(IAppDbContext db, ICurrentUser currentUser, IFileStorage storage) : IFileReferences
 {
     public Task<bool> CanAttachAsync(Guid fileId, CancellationToken cancellationToken) =>
         FileAccess.VisibleFiles(db, currentUser).AnyAsync(f => f.Id == fileId, cancellationToken);
+
+    public async Task<AttachedFile?> OpenAsync(Guid fileId, CancellationToken cancellationToken)
+    {
+        var file = await FileAccess.VisibleFiles(db, currentUser).SingleOrDefaultAsync(f => f.Id == fileId, cancellationToken);
+        if (file is null)
+        {
+            return null;
+        }
+
+        var content = await storage.OpenReadAsync(file.StorageKey, cancellationToken);
+        return content is null ? null : new AttachedFile(file.FileName, file.ContentType, content);
+    }
 }
 
 internal static class FileAccess

@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<Contracts.Approvals.IApprovalDocumentHandler, Purchasing.PurchaseOrderApprovalHandler>();
         services.AddScoped<Contracts.Requisitions.IRequisitionSourcing, Requisitions.RequisitionSourcing>();
         services.AddScoped<Contracts.Purchasing.IPurchaseOrderDrafts, Purchasing.PurchaseOrderDrafts>();
+        services.AddScoped<Contracts.Purchasing.IPurchaseOrderInvoicing, Purchasing.PurchaseOrderInvoicing>();
+        services.AddScoped<Payables.InvoiceChecks>();
 
         return services;
     }

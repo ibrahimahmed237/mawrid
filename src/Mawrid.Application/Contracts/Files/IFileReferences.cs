@@ -7,4 +7,9 @@ namespace Mawrid.Application.Contracts.Files;
 public interface IFileReferences
 {
     Task<bool> CanAttachAsync(Guid fileId, CancellationToken cancellationToken);
+
+    /// <summary>Opens a file the current user can attach, or returns null. The caller disposes the stream.</summary>
+    Task<AttachedFile?> OpenAsync(Guid fileId, CancellationToken cancellationToken);
 }
+
+public sealed record AttachedFile(string FileName, string ContentType, Stream Content);

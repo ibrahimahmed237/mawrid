@@ -202,4 +202,16 @@ public class InvoiceTests
         SupplierInvoice.Receive(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), details, InvoiceSource.Manual, null, null, Clerk, Today, Now)
             .Error.Should().Be(PayablesErrors.LinesInvalid);
     }
+
+    [Fact]
+    public void A_typed_in_invoice_needs_a_second_person_to_release_it()
+    {
+        var line = Line(1, "Laptop", 1m, 3_900m);
+        var details = new InvoiceDetails("INV-3", Today, [line], line.NetAmount, line.VatAmount, line.NetAmount + line.VatAmount, null);
+        var invoice = SupplierInvoice.Receive(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), details, InvoiceSource.Manual, null, Guid.NewGuid(), Clerk, Today, Now).Value;
+        invoice.ApplyCheck([], Now);
+
+        invoice.Release(Clerk, Now).Error.Should().Be(PayablesErrors.SamePersonCannotRelease);
+        invoice.Release(Guid.NewGuid(), Now).IsSuccess.Should().BeTrue();
+    }
 }

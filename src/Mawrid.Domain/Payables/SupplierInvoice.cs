@@ -186,12 +186,20 @@ public sealed class SupplierInvoice : AggregateRoot<Guid>, ITenantOwned
         return Result.Success();
     }
 
-    /// <summary>Releases a matched invoice for payment. The ERP pays it.</summary>
+    /// <summary>
+    /// Releases a matched invoice for payment. The ERP pays it. A typed-in invoice needs a second
+    /// person: whoever entered it cannot release it.
+    /// </summary>
     public Result Release(Guid by, DateTimeOffset now)
     {
         if (Status != InvoiceStatus.Matched)
         {
             return PayablesErrors.InvalidStatusChange(Status, InvoiceStatus.ReleasedForPayment);
+        }
+
+        if (Source == InvoiceSource.Manual && by == ReceivedBy)
+        {
+            return PayablesErrors.SamePersonCannotRelease;
         }
 
         Status = InvoiceStatus.ReleasedForPayment;

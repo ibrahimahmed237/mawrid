@@ -514,6 +514,109 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                     b.ToTable("Users", "identity");
                 });
 
+            modelBuilder.Entity("Mawrid.Domain.Payables.SupplierInvoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CheckedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("IssueDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("NetTotal")
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PdfFileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("QrCode")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset>("ReceivedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("ReceivedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset?>("ReleasedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ReleasedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SupplierInvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("VatTotal")
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
+
+                    b.Property<Guid?>("XmlFileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId", "PurchaseOrderId");
+
+                    b.HasIndex("OrganizationId", "Status");
+
+                    b.HasIndex("OrganizationId", "SupplierId", "SupplierInvoiceNumber")
+                        .IsUnique();
+
+                    b.ToTable("SupplierInvoices", "payables");
+                });
+
             modelBuilder.Entity("Mawrid.Domain.Purchasing.PurchaseOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1322,6 +1425,106 @@ namespace Mawrid.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Roles");
+                });
+
+            modelBuilder.Entity("Mawrid.Domain.Payables.SupplierInvoice", b =>
+                {
+                    b.OwnsMany("Mawrid.Domain.Payables.InvoiceHold", "Holds", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Actual")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("nvarchar(200)");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("nvarchar(50)");
+
+                            b1.Property<string>("Expected")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("nvarchar(200)");
+
+                            b1.Property<int?>("LineNumber")
+                                .HasColumnType("int");
+
+                            b1.Property<DateTimeOffset?>("OverriddenAtUtc")
+                                .HasColumnType("datetimeoffset");
+
+                            b1.Property<Guid?>("OverriddenBy")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("OverrideReason")
+                                .HasMaxLength(500)
+                                .HasColumnType("nvarchar(500)");
+
+                            b1.Property<Guid>("SupplierInvoiceId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SupplierInvoiceId");
+
+                            b1.ToTable("SupplierInvoiceHolds", "payables");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SupplierInvoiceId");
+                        });
+
+                    b.OwnsMany("Mawrid.Domain.Payables.SupplierInvoiceLine", "Lines", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Description")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("nvarchar(500)");
+
+                            b1.Property<decimal>("NetAmount")
+                                .HasPrecision(19, 2)
+                                .HasColumnType("decimal(19,2)");
+
+                            b1.Property<int>("PoLineNumber")
+                                .HasColumnType("int");
+
+                            b1.Property<decimal>("Quantity")
+                                .HasPrecision(18, 3)
+                                .HasColumnType("decimal(18,3)");
+
+                            b1.Property<Guid>("SupplierInvoiceId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<decimal>("UnitPrice")
+                                .HasPrecision(19, 4)
+                                .HasColumnType("decimal(19,4)");
+
+                            b1.Property<decimal>("VatAmount")
+                                .HasPrecision(19, 2)
+                                .HasColumnType("decimal(19,2)");
+
+                            b1.Property<string>("VatCategory")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("nvarchar(20)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SupplierInvoiceId");
+
+                            b1.ToTable("SupplierInvoiceLines", "payables");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SupplierInvoiceId");
+                        });
+
+                    b.Navigation("Holds");
+
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Mawrid.Domain.Purchasing.PurchaseOrder", b =>

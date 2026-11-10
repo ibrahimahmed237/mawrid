@@ -21,6 +21,9 @@ public static class Policies
     /// <summary>Warehouse or site staff who confirm deliveries: Receiver or Admin.</summary>
     public const string Receiving = nameof(Receiving);
 
+    /// <summary>Accounts payable: AP clerk or Admin.</summary>
+    public const string Payables = nameof(Payables);
+
     public static void Configure(AuthorizationOptions options)
     {
         // Secure by default: an endpoint without [Authorize] still needs a valid token.
@@ -35,5 +38,6 @@ public static class Policies
             .RequireClaim(MawridClaims.Supplier));
         options.AddPolicy(Procurement, policy => policy.RequireRole(nameof(Role.Buyer), nameof(Role.Admin)));
         options.AddPolicy(Receiving, policy => policy.RequireRole(nameof(Role.Receiver), nameof(Role.Admin)));
+        options.AddPolicy(Payables, policy => policy.RequireRole(nameof(Role.ApClerk), nameof(Role.Admin)));
     }
 }

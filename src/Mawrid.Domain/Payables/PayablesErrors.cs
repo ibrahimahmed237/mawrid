@@ -28,6 +28,9 @@ public static class PayablesErrors
 
     public static readonly Error ReasonRequired = Error.Validation("invoice.reason_required", "A reason of 10 to 500 characters is required.");
 
+    public static readonly Error SamePersonCannotRelease = Error.Forbidden(
+        "invoice.same_person", "The person who typed in an invoice cannot also release it for payment.");
+
     public static readonly Error SourceFileInvalid = Error.Validation("invoice.source_file_invalid", "The invoice file could not be read as a UBL 2.1 invoice.");
 
     public static Error InvalidStatusChange(InvoiceStatus from, InvoiceStatus to) =>
