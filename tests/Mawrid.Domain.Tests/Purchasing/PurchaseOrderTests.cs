@@ -119,4 +119,50 @@ public class PurchaseOrderTests
     {
         Draft().RecordReceipt(Guid.NewGuid(), [new ReceiptLineInput(1, 1)], 0, null, Now).Error.Should().Be(PurchasingErrors.NotReceivable);
     }
+
+    [Fact]
+    public void The_buyer_cannot_receive_their_own_order()
+    {
+        var po = Sent();
+
+        po.RecordReceipt(po.BuyerId, [new ReceiptLineInput(1, 1)], 0, null, Now).Error.Should().Be(PurchasingErrors.ReceiverIsBuyer);
+    }
+
+    [Fact]
+    public void A_partly_received_po_can_be_short_closed_with_a_reason()
+    {
+        var po = Sent();
+        po.RecordReceipt(Guid.NewGuid(), [new ReceiptLineInput(1, 4)], 0, null, Now);
+
+        po.Close().Error.Should().Be(PurchasingErrors.ShortCloseReasonRequired);
+        po.Close("Supplier discontinued the model").IsSuccess.Should().BeTrue();
+
+        po.Status.Should().Be(PurchaseOrderStatus.Closed);
+        po.ClosedReason.Should().Be("Supplier discontinued the model");
+    }
+
+    [Fact]
+    public void A_po_with_nothing_received_cannot_be_closed()
+    {
+        Sent().Close("Not needed any more").Error.Should().Be(PurchasingErrors.CannotClose);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(181)]
+    public void Payment_terms_must_be_in_range(int days)
+    {
+        Draft().UpdateTerms(days, null).Error.Should().Be(PurchasingErrors.TermsInvalid);
+    }
+
+    [Fact]
+    public void Terms_can_change_only_in_draft()
+    {
+        var po = Draft();
+        po.UpdateTerms(60, "  Riyadh warehouse, gate 3 ").IsSuccess.Should().BeTrue();
+        po.PaymentTermsDays.Should().Be(60);
+        po.DeliveryAddress.Should().Be("Riyadh warehouse, gate 3");
+
+        Sent().UpdateTerms(45, null).Error.Should().Be(PurchasingErrors.NotDraft);
+    }
 }

@@ -1,3 +1,4 @@
+using Mawrid.Application.Common.Persistence;
 using Mawrid.Domain.Approvals;
 
 namespace Mawrid.Application.Approvals;
@@ -38,5 +39,5 @@ internal static class ApprovalMapping
         request.Steps.OrderBy(s => s.Order)
             .Select(s => new ApprovalStepDto(s.Order, s.Name, s.Status.ToString(), s.EligibleApproverIds.Count, s.DecidedBy, s.OnBehalfOf, s.DecidedAtUtc, s.Comment))
             .ToList(),
-        Convert.ToBase64String(request.RowVersion));
+        RowVersions.Format(request.RowVersion));
 }

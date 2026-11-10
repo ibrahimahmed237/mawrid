@@ -16,35 +16,65 @@ public sealed record PurchaseOrderDto(
     string Number,
     Guid SupplierId,
     Guid CostCenterId,
+    Guid BuyerId,
     string Source,
     Guid SourceId,
     IReadOnlyList<Guid> RequisitionIds,
     string Status,
     Guid? ApprovalRequestId,
     string? RejectionReason,
+    string? CancellationReason,
+    string? ClosedReason,
     int PaymentTermsDays,
+    string? DeliveryAddress,
     decimal NetTotal,
     decimal VatTotal,
     decimal Total,
     DateTimeOffset? SentAtUtc,
     DateTimeOffset? AcknowledgedAtUtc,
     IReadOnlyList<PurchaseOrderLineDto> Lines,
-    IReadOnlyList<GoodsReceiptDto> Receipts);
+    IReadOnlyList<GoodsReceiptDto> Receipts,
+    string Version);
 
 public sealed record PurchaseOrderLineDto(
     int LineNumber, string Description, decimal Quantity, string Unit, decimal UnitPrice, string VatCategory, decimal VatRate,
     decimal NetAmount, decimal VatAmount, decimal AcceptedQuantity, decimal RejectedQuantity, decimal InvoicedQuantity);
+
+public sealed record SupplierPurchaseOrderDto(
+    Guid Id,
+    string Number,
+    string Status,
+    int PaymentTermsDays,
+    string? DeliveryAddress,
+    decimal NetTotal,
+    decimal VatTotal,
+    decimal Total,
+    DateTimeOffset? SentAtUtc,
+    DateTimeOffset? AcknowledgedAtUtc,
+    string? CancellationReason,
+    IReadOnlyList<PurchaseOrderLineDto> Lines,
+    IReadOnlyList<GoodsReceiptDto> Receipts);
 
 public sealed record GoodsReceiptDto(Guid Id, Guid ReceivedBy, DateTimeOffset ReceivedAtUtc, string? Note, IReadOnlyList<GoodsReceiptLine> Lines);
 
 internal static class PurchaseOrderMapping
 {
     public static PurchaseOrderDto ToDto(PurchaseOrder po) => new(
-        po.Id, po.Number, po.SupplierId, po.CostCenterId, po.Source.ToString(), po.SourceId, po.RequisitionIds, po.Status.ToString(),
-        po.ApprovalRequestId, po.RejectionReason, po.PaymentTermsDays, po.NetTotal, po.VatTotal, po.Total, po.SentAtUtc, po.AcknowledgedAtUtc,
+        po.Id, po.Number, po.SupplierId, po.CostCenterId, po.BuyerId, po.Source.ToString(), po.SourceId, po.RequisitionIds, po.Status.ToString(),
+        po.ApprovalRequestId, po.RejectionReason, po.CancellationReason, po.ClosedReason, po.PaymentTermsDays, po.DeliveryAddress,
+        po.NetTotal, po.VatTotal, po.Total, po.SentAtUtc, po.AcknowledgedAtUtc, Lines(po), Receipts(po), RowVersions.Format(po.RowVersion));
+
+    /// <summary>What a supplier sees: no approval, cost center or internal notes.</summary>
+    public static SupplierPurchaseOrderDto ToSupplierDto(PurchaseOrder po) => new(
+        po.Id, po.Number, po.Status.ToString(), po.PaymentTermsDays, po.DeliveryAddress, po.NetTotal, po.VatTotal, po.Total,
+        po.SentAtUtc, po.AcknowledgedAtUtc, po.CancellationReason, Lines(po), Receipts(po));
+
+    private static List<PurchaseOrderLineDto> Lines(PurchaseOrder po) =>
         po.Lines.OrderBy(l => l.LineNumber).Select(l => new PurchaseOrderLineDto(l.LineNumber, l.Description, l.Quantity, l.Unit, l.UnitPrice,
-            l.VatCategory.ToString(), l.VatRate, l.NetAmount, l.VatAmount, l.AcceptedQuantity, l.RejectedQuantity, l.InvoicedQuantity)).ToList(),
-        po.Receipts.OrderBy(r => r.ReceivedAtUtc).Select(r => new GoodsReceiptDto(r.Id, r.ReceivedBy, r.ReceivedAtUtc, r.Note, r.Lines)).ToList());
+            l.VatCategory.ToString(), l.VatRate, l.NetAmount, l.VatAmount, l.AcceptedQuantity, l.RejectedQuantity, l.InvoicedQuantity)).ToList();
+
+    private static List<GoodsReceiptDto> Receipts(PurchaseOrder po) =>
+        po.Receipts.OrderBy(r => r.ReceivedAtUtc).Select(r => new GoodsReceiptDto(r.Id, r.ReceivedBy, r.ReceivedAtUtc, r.Note, r.Lines)).ToList();
 }
 
 internal static class PurchaseOrderAccess
@@ -96,5 +126,18 @@ internal sealed class GetPurchaseOrderQueryHandler(IAppDbContext db, ICurrentUse
     {
         var order = await PurchaseOrderAccess.Visible(db, currentUser).SingleOrDefaultAsync(o => o.Id == query.PurchaseOrderId, cancellationToken);
         return order is null ? PurchasingErrors.NotFound : PurchaseOrderMapping.ToDto(order);
+    }
+}
+
+/// <summary>One PO as the supplier portal shows it.</summary>
+public sealed record GetSupplierPurchaseOrderQuery(Guid PurchaseOrderId) : IQuery<SupplierPurchaseOrderDto>;
+
+internal sealed class GetSupplierPurchaseOrderQueryHandler(IAppDbContext db, ICurrentUser currentUser)
+    : IQueryHandler<GetSupplierPurchaseOrderQuery, SupplierPurchaseOrderDto>
+{
+    public async Task<Result<SupplierPurchaseOrderDto>> Handle(GetSupplierPurchaseOrderQuery query, CancellationToken cancellationToken)
+    {
+        var order = await PurchaseOrderAccess.Visible(db, currentUser).SingleOrDefaultAsync(o => o.Id == query.PurchaseOrderId, cancellationToken);
+        return order is null ? PurchasingErrors.NotFound : PurchaseOrderMapping.ToSupplierDto(order);
     }
 }

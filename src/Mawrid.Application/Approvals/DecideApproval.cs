@@ -36,7 +36,7 @@ internal sealed class DecideApprovalCommandHandler(
             return ApprovalErrors.NotFound;
         }
 
-        if (command.ExpectedVersion is not null && command.ExpectedVersion != Convert.ToBase64String(request.RowVersion))
+        if (RowVersions.IsStale(command.ExpectedVersion, request.RowVersion))
         {
             return ApprovalErrors.StaleVersion;
         }

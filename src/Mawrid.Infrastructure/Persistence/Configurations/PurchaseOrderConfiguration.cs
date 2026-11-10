@@ -15,6 +15,8 @@ internal sealed class PurchaseOrderConfiguration : IEntityTypeConfiguration<Purc
         builder.Property(o => o.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(o => o.RejectionReason).HasMaxLength(500);
         builder.Property(o => o.CancellationReason).HasMaxLength(PurchaseOrder.ReasonMaxLength);
+        builder.Property(o => o.ClosedReason).HasMaxLength(PurchaseOrder.ReasonMaxLength);
+        builder.Property(o => o.DeliveryAddress).HasMaxLength(PurchaseOrder.DeliveryAddressMaxLength);
         builder.PrimitiveCollection(o => o.RequisitionIds).IsRequired();
         builder.HasIndex(o => new { o.OrganizationId, o.Number }).IsUnique();
         builder.HasIndex(o => new { o.OrganizationId, o.SupplierId, o.Status });

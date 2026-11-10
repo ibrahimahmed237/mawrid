@@ -16,7 +16,21 @@ public static class PurchasingErrors
 
     public static readonly Error CannotCancel = Error.RuleViolation("purchase_order.cannot_cancel", "A PO cannot be cancelled after goods were received.");
 
-    public static readonly Error CannotClose = Error.RuleViolation("purchase_order.cannot_close", "A PO can be closed only when fully received and fully invoiced.");
+    public static readonly Error CannotClose = Error.RuleViolation("purchase_order.cannot_close", "A PO can be closed when fully received and invoiced, or short closed when partly received.");
+
+    public static readonly Error ShortCloseReasonRequired = Error.Validation("purchase_order.short_close_reason", "Closing a partly received PO needs a reason of 3 to 500 characters.");
+
+    public static readonly Error NotDraft = Error.RuleViolation("purchase_order.not_draft", "Only a draft PO can be changed.");
+
+    public static readonly Error TermsInvalid = Error.Validation("purchase_order.terms_invalid", "Payment terms must be 0 to 180 days and the delivery address at most 300 characters.");
+
+    public static readonly Error ReceiverIsBuyer = Error.Forbidden("receipt.receiver_is_buyer", "The buyer who placed the order cannot confirm its delivery.");
+
+    public static readonly Error StaleVersion = Error.Precondition("purchase_order.stale_version", "The purchase order changed since you loaded it. Reload and try again.");
+
+    public static readonly Error OverDirectPurchaseLimit = Error.RuleViolation("purchase_order.over_direct_limit", "The order total is above the direct purchase limit. Use an RFQ.");
+
+    public static readonly Error DirectPurchaseLinesInvalid = Error.Validation("purchase_order.direct_lines_invalid", "Give a price for every requisition line, once each.");
 
     public static readonly Error ReasonRequired = Error.Validation("purchase_order.reason_required", "A reason of 3 to 500 characters is required.");
 

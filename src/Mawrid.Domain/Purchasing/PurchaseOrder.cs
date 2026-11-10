@@ -10,6 +10,8 @@ namespace Mawrid.Domain.Purchasing;
 public sealed class PurchaseOrder : AggregateRoot<Guid>, ITenantOwned
 {
     public const int ReasonMaxLength = 500;
+    public const int DeliveryAddressMaxLength = 300;
+    public const int MaxPaymentTermsDays = 180;
 
     private readonly List<PurchaseOrderLine> _lines = [];
     private readonly List<GoodsReceipt> _receipts = [];
@@ -54,6 +56,9 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, ITenantOwned
 
     public int PaymentTermsDays { get; private set; }
 
+    /// <summary>Where the supplier delivers. Empty means the organization's main address.</summary>
+    public string? DeliveryAddress { get; private set; }
+
     public PurchaseOrderStatus Status { get; private set; }
 
     public Guid? ApprovalRequestId { get; private set; }
@@ -62,6 +67,9 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, ITenantOwned
     public string? RejectionReason { get; private set; }
 
     public string? CancellationReason { get; private set; }
+
+    /// <summary>Set when a PO is closed by hand before everything was delivered ("short close").</summary>
+    public string? ClosedReason { get; private set; }
 
     public DateTimeOffset? SentAtUtc { get; private set; }
 
@@ -91,6 +99,25 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, ITenantOwned
         order._lines.AddRange(lines.Select((l, i) => PurchaseOrderLine.Create(i + 1, l, today)));
         order.Raise(new PurchaseOrderCreated(order.Id, organizationId, supplierId));
         return order;
+    }
+
+    /// <summary>Changes payment terms and delivery address while the PO is a draft.</summary>
+    public Result UpdateTerms(int paymentTermsDays, string? deliveryAddress)
+    {
+        if (Status != PurchaseOrderStatus.Draft)
+        {
+            return PurchasingErrors.NotDraft;
+        }
+
+        deliveryAddress = string.IsNullOrWhiteSpace(deliveryAddress) ? null : deliveryAddress.Trim();
+        if (paymentTermsDays is < 0 or > MaxPaymentTermsDays || deliveryAddress?.Length > DeliveryAddressMaxLength)
+        {
+            return PurchasingErrors.TermsInvalid;
+        }
+
+        PaymentTermsDays = paymentTermsDays;
+        DeliveryAddress = deliveryAddress;
+        return Result.Success();
     }
 
     public Result Submit(Guid approvalRequestId)
@@ -173,6 +200,12 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, ITenantOwned
             return PurchasingErrors.NotReceivable;
         }
 
+        // Segregation of duties: the buyer who placed the order does not confirm its delivery.
+        if (receivedBy == BuyerId)
+        {
+            return PurchasingErrors.ReceiverIsBuyer;
+        }
+
         if (lines.Count == 0 || lines.Select(l => l.LineNumber).Distinct().Count() != lines.Count)
         {
             return PurchasingErrors.ReceiptInvalid;
@@ -245,15 +278,34 @@ public sealed class PurchaseOrder : AggregateRoot<Guid>, ITenantOwned
         return Result.Success();
     }
 
-    /// <summary>Closes a PO that is fully received and fully invoiced.</summary>
-    public Result Close()
+    /// <summary>
+    /// Closes the PO. A PO that is fully received and fully invoiced closes without a reason.
+    /// A partly received PO can be "short closed" with a reason: the rest will not be delivered.
+    /// </summary>
+    public Result Close(string? reason = null)
     {
-        if (Status != PurchaseOrderStatus.Received || _lines.Any(l => l.InvoicedQuantity < l.AcceptedQuantity))
+        reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        var complete = Status == PurchaseOrderStatus.Received && _lines.All(l => l.InvoicedQuantity >= l.AcceptedQuantity);
+
+        if (!complete)
         {
-            return PurchasingErrors.CannotClose;
+            if (Status != PurchaseOrderStatus.PartiallyReceived)
+            {
+                return PurchasingErrors.CannotClose;
+            }
+
+            if (reason is null || reason.Length is < 3 or > ReasonMaxLength)
+            {
+                return PurchasingErrors.ShortCloseReasonRequired;
+            }
+        }
+        else if (reason?.Length > ReasonMaxLength)
+        {
+            return PurchasingErrors.ReasonRequired;
         }
 
         Status = PurchaseOrderStatus.Closed;
+        ClosedReason = reason;
         Raise(new PurchaseOrderClosed(Id, OrganizationId));
         return Result.Success();
     }
