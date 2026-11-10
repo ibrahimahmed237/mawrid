@@ -201,4 +201,30 @@ public class RequisitionApprovalTests(MawridApiFactory factory)
         largeAfterChange.StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await flow.GetRequisitionAsync(large.Id)).Status.Should().Be("InSourcing");
     }
+
+    [Fact]
+    public async Task A_draft_can_be_edited_and_its_lines_replaced()
+    {
+        var flow = await ApprovalFlow.StartAsync(factory);
+        var id = await flow.CreateRequisitionAsync(1_000m);
+
+        var update = await flow.Requester.PutAsJsonAsync($"/api/v1/requisitions/{id}", new
+        {
+            costCenterId = flow.CostCenterId,
+            title = "Laptops and monitors",
+            justification = "Engineers need a second screen as well.",
+            neededBy = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(20)),
+            lines = new[]
+            {
+                new { description = "Laptop", quantity = 2m, unit = "pcs", estimatedUnitPrice = 4_000m },
+                new { description = "Monitor 27 inch", quantity = 2m, unit = "pcs", estimatedUnitPrice = 900m },
+            },
+        });
+        var edited = await flow.GetRequisitionAsync(id);
+
+        update.StatusCode.Should().Be(HttpStatusCode.NoContent, await update.Content.ReadAsStringAsync());
+        edited.Title.Should().Be("Laptops and monitors");
+        edited.Lines.Should().HaveCount(2);
+        edited.EstimatedNetTotal.Should().Be(9_800m);
+    }
 }

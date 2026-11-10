@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Mawrid.Application.Common.Abstractions;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Azurite;
@@ -25,6 +26,9 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
     private readonly AzuriteContainer _azurite = new AzuriteBuilder(AzuriteImage).WithCommand("--skipApiVersionCheck").Build();
 
     /// <summary>Points at a test database (not master), created by the migrations on startup.</summary>
+    /// <summary>The business clock. Tests can move it forward with <see cref="TestClock.Travel"/>.</summary>
+    public TestClock Clock { get; } = new();
+
     public string ConnectionString => new SqlConnectionStringBuilder(_sqlServer.GetConnectionString())
     {
         InitialCatalog = "MawridTests",
@@ -54,6 +58,7 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
         {
             services.AddControllers().AddApplicationPart(typeof(MawridApiFactory).Assembly);
             services.AddSingleton<EventRecorder>();
+            services.AddSingleton<IClock>(Clock);
             services.AddTransient(typeof(INotificationHandler<>), typeof(RecordingEventHandler<>));
         });
     }

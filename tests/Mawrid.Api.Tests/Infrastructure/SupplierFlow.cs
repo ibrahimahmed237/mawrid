@@ -31,6 +31,10 @@ public sealed class SupplierFlow
 
     public HttpClient Buyer { get; }
 
+    /// <summary>Onboards suppliers into an existing organization, using its admin and buyer.</summary>
+    public static SupplierFlow For(MawridApiFactory factory, Guid organizationId, HttpClient admin, HttpClient buyer) =>
+        new(factory, organizationId, admin, buyer);
+
     public static async Task<SupplierFlow> StartAsync(MawridApiFactory factory)
     {
         var organizationId = await factory.CreateOrganizationAsync();
