@@ -27,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<Contracts.Identity.IOrganizationDirectory, Identity.OrganizationDirectory>();
         services.AddScoped<Contracts.Approvals.IApprovalService, Approvals.ApprovalService>();
         services.AddScoped<Contracts.Approvals.IApprovalDocumentHandler, Requisitions.RequisitionApprovalHandler>();
+        services.AddScoped<Contracts.Requisitions.IRequisitionSourcing, Requisitions.RequisitionSourcing>();
+        services.AddScoped<Contracts.Purchasing.IPurchaseOrderDrafts, Purchasing.PurchaseOrderDrafts>();
 
         return services;
     }

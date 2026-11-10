@@ -27,8 +27,8 @@ internal sealed class RequisitionConfiguration : IEntityTypeConfiguration<Purcha
         {
             lines.ToTable("RequisitionLines", Schemas.Requisitions);
             lines.WithOwner().HasForeignKey("RequisitionId");
-            lines.HasKey("RequisitionId", nameof(RequisitionLine.LineNumber));
-            lines.Property(l => l.LineNumber).ValueGeneratedNever();
+            lines.HasKey(l => l.Id);
+            lines.Property(l => l.Id).ValueGeneratedNever();
             lines.Property(l => l.Description).HasMaxLength(RequisitionLine.DescriptionMaxLength).IsRequired();
             lines.Property(l => l.Unit).HasMaxLength(RequisitionLine.UnitMaxLength).IsRequired();
             lines.Property(l => l.Quantity).HasPrecision(18, 3);

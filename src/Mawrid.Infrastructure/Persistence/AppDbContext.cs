@@ -4,7 +4,9 @@ using Mawrid.Domain.Approvals;
 using Mawrid.Domain.Common;
 using Mawrid.Domain.Files;
 using Mawrid.Domain.Identity;
+using Mawrid.Domain.Purchasing;
 using Mawrid.Domain.Requisitions;
+using Mawrid.Domain.Sourcing;
 using Mawrid.Infrastructure.Numbering;
 using Mawrid.Domain.Suppliers;
 using Mawrid.Infrastructure.Auditing;
@@ -47,6 +49,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
     public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
 
     public DbSet<PurchaseRequisition> Requisitions => Set<PurchaseRequisition>();
+
+    public DbSet<Rfq> Rfqs => Set<Rfq>();
+
+    public DbSet<Quotation> Quotations => Set<Quotation>();
+
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
 
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
 

@@ -34,6 +34,8 @@ public static class SourcingErrors
 
     public static readonly Error RequisitionsInvalid = Error.RuleViolation("rfq.requisitions_invalid", "Requisitions must be approved for RFQ sourcing and share one cost center.");
 
+    public static readonly Error AttachmentNotFound = Error.NotFound("quotation.attachment_not_found", "An attachment was not found, or it belongs to someone else.");
+
     public static readonly Error QuotationNotFound = Error.NotFound("quotation.not_found", "No quotation was found.");
 
     public static Error DeadlineTooSoon(int days) => Error.RuleViolation("rfq.deadline_too_soon", $"The deadline must be at least {days} days from now, and not earlier than before.");

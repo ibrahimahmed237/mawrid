@@ -9,6 +9,7 @@ public sealed class RequisitionLine
 
     private RequisitionLine(int lineNumber, string description, decimal quantity, string unit, decimal estimatedUnitPrice, Guid? preferredSupplierId)
     {
+        Id = Guid.CreateVersion7();
         LineNumber = lineNumber;
         Description = description;
         Quantity = quantity;
@@ -22,6 +23,9 @@ public sealed class RequisitionLine
         Description = null!;
         Unit = null!;
     }
+
+    /// <summary>Own key: editing a draft replaces all lines, and new lines must be inserted, not updated.</summary>
+    public Guid Id { get; private set; }
 
     public int LineNumber { get; private set; }
 

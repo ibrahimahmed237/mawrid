@@ -2,7 +2,6 @@ using Mawrid.Domain.Common;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Mawrid.Application.Common.Abstractions;
 using Mawrid.Application.Common.Security;
 using Mawrid.Domain.Identity;
 using Microsoft.Extensions.Options;
@@ -12,7 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 namespace Mawrid.Infrastructure.Identity;
 
 /// <summary>Creates signed JWT access tokens and random refresh tokens.</summary>
-public sealed class JwtTokenService(IOptions<JwtOptions> options, IClock clock) : ITokenService
+/// <remarks>Token times always use the real system time (<see cref="TimeProvider"/>), never a business clock.</remarks>
+public sealed class JwtTokenService(IOptions<JwtOptions> options, TimeProvider timeProvider) : ITokenService
 {
     private readonly JwtOptions _options = options.Value;
     private readonly JsonWebTokenHandler _handler = new();
@@ -21,7 +21,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options, IClock clock) 
 
     public AccessToken CreateAccessToken(User user)
     {
-        var now = clock.UtcNow;
+        var now = timeProvider.GetUtcNow();
         var expires = now.AddMinutes(_options.AccessTokenMinutes);
 
         var claims = new List<Claim>

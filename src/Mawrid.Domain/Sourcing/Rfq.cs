@@ -346,6 +346,7 @@ public sealed class RfqInvitation
 {
     internal RfqInvitation(Guid supplierId, DateTimeOffset invitedAtUtc)
     {
+        Id = Guid.CreateVersion7();
         SupplierId = supplierId;
         InvitedAtUtc = invitedAtUtc;
     }
@@ -353,6 +354,12 @@ public sealed class RfqInvitation
     private RfqInvitation()
     {
     }
+
+    /// <summary>
+    /// Own key, so EF Core sees a new invitation as new. (With a composite key that includes the
+    /// owner's id, EF Core treats an item added later as an existing row and updates it.)
+    /// </summary>
+    public Guid Id { get; private set; }
 
     public Guid SupplierId { get; private set; }
 
@@ -363,6 +370,7 @@ public sealed class RfqAward
 {
     internal RfqAward(int itemLineNumber, Guid supplierId, Guid quotationId, decimal unitPrice, VatCategory vatCategory, bool isLowestPrice, string? justification)
     {
+        Id = Guid.CreateVersion7();
         ItemLineNumber = itemLineNumber;
         SupplierId = supplierId;
         QuotationId = quotationId;
@@ -375,6 +383,8 @@ public sealed class RfqAward
     private RfqAward()
     {
     }
+
+    public Guid Id { get; private set; }
 
     public int ItemLineNumber { get; private set; }
 

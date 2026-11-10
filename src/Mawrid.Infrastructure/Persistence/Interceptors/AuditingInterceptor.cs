@@ -124,15 +124,17 @@ public sealed class AuditingInterceptor(CurrentUserContext currentUser, IClock c
             aggregate.Property(AuditFields.CreatedAtUtc).CurrentValue = now;
             aggregate.Property(AuditFields.CreatedBy).CurrentValue = currentUser.UserId;
         }
-        else
-        {
-            // Also marks the aggregate as modified when only an owned child changed,
-            // so its RowVersion changes and concurrent edits are detected.
-            aggregate.State = EntityState.Modified;
-        }
 
         aggregate.Property(AuditFields.UpdatedAtUtc).CurrentValue = now;
         aggregate.Property(AuditFields.UpdatedBy).CurrentValue = currentUser.UserId;
+
+        // Marking one property (not the whole entry) as modified updates the aggregate row even when
+        // only an owned child changed, so its RowVersion changes and concurrent edits are detected.
+        // Setting the entry's State instead would also flip new owned children from Added to Modified.
+        if (aggregate.State != EntityState.Added)
+        {
+            aggregate.Property(AuditFields.UpdatedAtUtc).IsModified = true;
+        }
     }
 
     private AuditEntry CreateAuditEntry(EntityEntry entry, EntityEntry aggregate, DateTimeOffset now)

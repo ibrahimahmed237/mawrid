@@ -9,4 +9,6 @@ public static class Schemas
     public const string Suppliers = "suppliers";
     public const string Approvals = "approvals";
     public const string Requisitions = "requisitions";
+    public const string Sourcing = "sourcing";
+    public const string Purchasing = "purchasing";
 }

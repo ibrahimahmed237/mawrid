@@ -22,6 +22,9 @@ public static class RequisitionErrors
     public static readonly Error NotFound =
         Error.NotFound("requisition.not_found", "The requisition was not found.");
 
+    public static readonly Error NotReadyForSourcing =
+        Error.RuleViolation("requisition.not_ready_for_sourcing", "The requisitions must be approved, in sourcing by the matching route, and share one cost center.");
+
     public static readonly Error CostCenterNotFound =
         Error.NotFound("requisition.cost_center_not_found", "The cost center was not found or is inactive.");
 

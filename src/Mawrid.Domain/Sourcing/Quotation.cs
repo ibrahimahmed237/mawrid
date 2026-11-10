@@ -117,6 +117,7 @@ public sealed class QuotationLine
 {
     internal QuotationLine(int itemLineNumber, decimal unitPrice, VatCategory vatCategory, int leadTimeDays)
     {
+        Id = Guid.CreateVersion7();
         ItemLineNumber = itemLineNumber;
         UnitPrice = unitPrice;
         VatCategory = vatCategory;
@@ -126,6 +127,9 @@ public sealed class QuotationLine
     private QuotationLine()
     {
     }
+
+    /// <summary>Own key: a revision replaces all lines, and new lines must be inserted, not updated.</summary>
+    public Guid Id { get; private set; }
 
     public int ItemLineNumber { get; private set; }
 
