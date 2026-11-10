@@ -1,9 +1,11 @@
 using Mawrid.Application.Common.Abstractions;
+using Mawrid.Application.Common.Notifications;
 using Mawrid.Application.Common.Persistence;
 using Mawrid.Application.Common.Security;
 using Mawrid.Application.Files;
 using Mawrid.Infrastructure.Files;
 using Mawrid.Infrastructure.Identity;
+using Mawrid.Infrastructure.Notifications;
 using Mawrid.Infrastructure.Outbox;
 using Mawrid.Infrastructure.Persistence;
 using Mawrid.Infrastructure.Persistence.Interceptors;
@@ -71,6 +73,11 @@ public static class DependencyInjection
 
         services.AddSingleton<Idempotency.IdempotencyStore>();
         services.AddScoped<IDocumentNumbers, Numbering.DocumentNumbers>();
+
+        // Notifications: every channel gets every notification. The API adds the real-time channel.
+        services.AddScoped<INotificationSender, NotificationSender>();
+        services.AddScoped<INotificationChannel, EmailNotificationChannel>();
+        services.AddSingleton<IEmailSender, LogEmailSender>();
 
         return services;
     }

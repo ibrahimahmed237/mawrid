@@ -35,4 +35,16 @@ internal sealed class OrganizationDirectory(IAppDbContext db, ICurrentUser curre
             .Where(u => userIds.Contains(u.Id) && u.IsActive && u.SupplierId == null)
             .Select(u => u.Id)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyCollection<Guid>> SupplierUsersAsync(IReadOnlyCollection<Guid> supplierIds, CancellationToken cancellationToken) =>
+        await db.Users.AsNoTracking()
+            .Where(u => u.IsActive && u.SupplierId != null && supplierIds.Contains(u.SupplierId.Value))
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyCollection<Guid>> UsersWithRoleAsync(Role role, CancellationToken cancellationToken) =>
+        await db.Users.AsNoTracking()
+            .Where(u => u.IsActive && u.SupplierId == null && u.Roles.Any(r => r.Role == role))
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
 }

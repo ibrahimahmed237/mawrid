@@ -4,6 +4,7 @@ using Mawrid.Api.Common.Health;
 using Mawrid.Api.Common.Idempotency;
 using Mawrid.Api.Common.Observability;
 using Mawrid.Api.Common.Security;
+using Mawrid.Api.Notifications;
 using Mawrid.Application;
 using Mawrid.Infrastructure;
 using Mawrid.Infrastructure.Persistence;
@@ -19,7 +20,8 @@ builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration)
     .AddApiHealthChecks()
-    .AddApiAuthentication();
+    .AddApiAuthentication()
+    .AddApiNotifications();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -53,6 +55,7 @@ app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapApiHealthChecks();
 app.MapControllers();
+app.MapHub<NotificationsHub>(NotificationsHub.Path);
 
 await app.RunAsync();
 

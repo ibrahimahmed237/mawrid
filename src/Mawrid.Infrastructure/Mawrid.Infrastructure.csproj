@@ -10,6 +10,9 @@
     <PackageReference Include="Azure.Storage.Blobs" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Mawrid.Api.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Identity, options validation and hosting come from the ASP.NET Core shared framework. -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Mawrid.Application.Common.Abstractions;
+using Mawrid.Infrastructure.Notifications;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Azurite;
@@ -25,10 +26,13 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
     // The Azure SDK can be newer than the Azurite image; skip Azurite's API version check in tests.
     private readonly AzuriteContainer _azurite = new AzuriteBuilder(AzuriteImage).WithCommand("--skipApiVersionCheck").Build();
 
-    /// <summary>Points at a test database (not master), created by the migrations on startup.</summary>
     /// <summary>The business clock. Tests can move it forward with <see cref="TestClock.Travel"/>.</summary>
     public TestClock Clock { get; } = new();
 
+    /// <summary>Every email sent through the notification channel.</summary>
+    public RecordingEmailSender Emails { get; } = new();
+
+    /// <summary>Points at a test database (not master), created by the migrations on startup.</summary>
     public string ConnectionString => new SqlConnectionStringBuilder(_sqlServer.GetConnectionString())
     {
         InitialCatalog = "MawridTests",
@@ -58,6 +62,8 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
         {
             services.AddControllers().AddApplicationPart(typeof(MawridApiFactory).Assembly);
             services.AddSingleton<EventRecorder>();
+            services.AddSingleton(Emails);
+            services.AddSingleton<IEmailSender>(Emails);
             services.AddSingleton<IClock>(Clock);
             services.AddTransient(typeof(INotificationHandler<>), typeof(RecordingEventHandler<>));
         });
