@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.SqlServer;
 using Mawrid.Application.Common.Abstractions;
 using Mawrid.Application.Common.Notifications;
 using Mawrid.Application.Common.Persistence;
@@ -5,6 +7,7 @@ using Mawrid.Application.Common.Security;
 using Mawrid.Application.Files;
 using Mawrid.Infrastructure.Files;
 using Mawrid.Infrastructure.Identity;
+using Mawrid.Infrastructure.Jobs;
 using Mawrid.Infrastructure.Notifications;
 using Mawrid.Infrastructure.Outbox;
 using Mawrid.Infrastructure.Persistence;
@@ -12,6 +15,7 @@ using Mawrid.Infrastructure.Persistence.Interceptors;
 using Mawrid.Infrastructure.Seeding;
 using Mawrid.Infrastructure.Time;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -79,6 +83,32 @@ public static class DependencyInjection
         services.AddScoped<INotificationChannel, EmailNotificationChannel>();
         services.AddSingleton<IEmailSender, LogEmailSender>();
 
+        AddJobs(services, configuration, connectionString);
         return services;
+    }
+
+    /// <summary>Hangfire keeps its queues in the same database, in the "hangfire" schema.</summary>
+    private static void AddJobs(IServiceCollection services, IConfiguration configuration, string connectionString)
+    {
+        services.AddOptions<JobsOptions>().BindConfiguration(JobsOptions.SectionName);
+        services.AddSingleton<TenantJobRunner>();
+        services.AddScoped<MawridJobs>();
+
+        if (!configuration.GetValue(JobsOptions.SectionName + ":" + nameof(JobsOptions.Enabled), defaultValue: true))
+        {
+            return;
+        }
+
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(() => new SqlConnection(connectionString), new SqlServerStorageOptions
+            {
+                SchemaName = "hangfire",
+                PrepareSchemaIfNecessary = true,
+            }));
+        services.AddHangfireServer(options => options.WorkerCount = 2);
+        services.AddHostedService<RecurringJobRegistration>();
     }
 }

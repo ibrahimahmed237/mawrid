@@ -23,5 +23,8 @@ public interface ICurrentUser
     /// <summary>The id that ties together all logs and audit rows of one request.</summary>
     string? CorrelationId { get; }
 
+    /// <summary>True for background jobs and outbox handlers acting for the system, not for a person.</summary>
+    bool IsSystem { get; }
+
     bool HasRole(Role role);
 }

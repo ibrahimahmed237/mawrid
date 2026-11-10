@@ -184,4 +184,30 @@ public class SupplierTests
         supplier.AddDocument(SupplierDocumentType.Other, Guid.NewGuid(), Today.AddYears(1), Today, Now).Error.Should().Be(SupplierErrors.SupplierRejected);
         supplier.RequestBankAccount(OtherIban, "SNB", "X Co", SupplierUser, Now).Error.Should().Be(SupplierErrors.SupplierRejected);
     }
+
+    [Theory]
+    [InlineData(30, 1)]
+    [InlineData(29, 0)]
+    [InlineData(7, 1)]
+    [InlineData(-1, 1)]
+    [InlineData(-2, 0)]
+    public void Expiring_documents_are_warned_about_at_30_and_7_days_and_the_day_after(int daysFromToday, int expectedWarnings)
+    {
+        var supplier = Approved();
+        supplier.ClearDomainEvents();
+
+        // All documents expire in a year; look at the day that is "daysFromToday" before that.
+        var day = Today.AddYears(1).AddDays(-daysFromToday);
+
+        supplier.WarnAboutExpiringDocuments(day).Should().Be(expectedWarnings * Supplier.RequiredDocuments.Count);
+        var warnings = supplier.DomainEvents.OfType<SupplierDocumentExpiring>().ToList();
+        warnings.Should().HaveCount(expectedWarnings * Supplier.RequiredDocuments.Count);
+        warnings.Should().NotContain(e => e.DaysLeft != daysFromToday);
+    }
+
+    [Fact]
+    public void Suppliers_that_are_not_approved_get_no_expiry_warnings()
+    {
+        ReadyForReview().WarnAboutExpiringDocuments(Today.AddYears(1).AddDays(-30)).Should().Be(0);
+    }
 }

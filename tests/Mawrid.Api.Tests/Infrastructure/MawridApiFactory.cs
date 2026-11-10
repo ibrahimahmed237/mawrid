@@ -55,8 +55,9 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("Jwt:SigningKey", TestSigningKey);
         builder.UseSetting("FileStorage:ConnectionString", _azurite.GetConnectionString());
 
-        // Tests run the outbox processor by hand, so results are deterministic.
+        // Tests run the outbox processor and the jobs by hand, so results are deterministic.
         builder.UseSetting("Outbox:Enabled", "false");
+        builder.UseSetting("Jobs:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {

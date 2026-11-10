@@ -34,3 +34,15 @@ public static class OutboxTestExtensions
         }
     }
 }
+
+public static class SystemCommandExtensions
+{
+    /// <summary>Sends a command the way a background job does: as the system user of one organization.</summary>
+    public static async Task<Mawrid.Domain.Common.Result<T>> RunAsSystemAsync<T>(
+        this MawridApiFactory factory, Guid organizationId, MediatR.IRequest<Mawrid.Domain.Common.Result<T>> command)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<Mawrid.Infrastructure.Identity.CurrentUserContext>().RunAsSystem(organizationId);
+        return await scope.ServiceProvider.GetRequiredService<MediatR.ISender>().Send(command);
+    }
+}

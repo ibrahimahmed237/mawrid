@@ -25,6 +25,9 @@
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.2" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
+    <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.25" />
+    <PackageVersion Include="Hangfire.Core" Version="1.8.25" />
+    <PackageVersion Include="Hangfire.SqlServer" Version="1.8.25" />
   </ItemGroup>
 
   <ItemGroup Label="Api">
@@ -40,6 +43,8 @@
   <ItemGroup Label="Transitive security pins">
     <!-- Pulled in by Microsoft.Data.SqlClient; 9.0.x has known advisories. -->
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+    <!-- Pulled in by Hangfire.Core (minimum 11.0.1); 13.0.1+ fixes the deep-nesting advisory. -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup Label="Tests">

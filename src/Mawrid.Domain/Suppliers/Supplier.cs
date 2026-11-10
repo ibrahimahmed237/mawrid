@@ -12,6 +12,9 @@ public sealed class Supplier : AggregateRoot<Guid>, ITenantOwned
     public const int NameMaxLength = 200;
     public const int ReasonMaxLength = 500;
 
+    /// <summary>Days before expiry that trigger a warning. -1 means "expired yesterday".</summary>
+    public static readonly IReadOnlyList<int> ExpiryWarningDays = [30, 7, -1];
+
     /// <summary>Documents a supplier must have, and keep valid, to be approved and to win awards.</summary>
     public static readonly IReadOnlyList<SupplierDocumentType> RequiredDocuments =
         [SupplierDocumentType.CrCertificate, SupplierDocumentType.VatCertificate, SupplierDocumentType.BankLetter];
@@ -105,6 +108,32 @@ public sealed class Supplier : AggregateRoot<Guid>, ITenantOwned
 
     /// <summary>Can the supplier be invited to RFQs and win awards today?</summary>
     public bool IsAwardable(DateOnly today) => Status == SupplierStatus.Approved && HasValidRequiredDocuments(today);
+
+    /// <summary>
+    /// Raises <see cref="SupplierDocumentExpiring"/> for each current document that expires in exactly
+    /// 30 or 7 days, or that expired yesterday. A daily job calls it, so each warning goes out once.
+    /// </summary>
+    /// <returns>How many warnings were raised.</returns>
+    public int WarnAboutExpiringDocuments(DateOnly today)
+    {
+        if (Status != SupplierStatus.Approved)
+        {
+            return 0;
+        }
+
+        var warnings = 0;
+        foreach (var document in CurrentDocuments)
+        {
+            var daysLeft = document.ExpiresOn.DayNumber - today.DayNumber;
+            if (ExpiryWarningDays.Contains(daysLeft))
+            {
+                Raise(new SupplierDocumentExpiring(Id, OrganizationId, document.Type, document.ExpiresOn, daysLeft));
+                warnings++;
+            }
+        }
+
+        return warnings;
+    }
 
     /// <param name="today">The business date (Asia/Riyadh). A document must expire after it.</param>
     public Result AddDocument(SupplierDocumentType type, Guid fileId, DateOnly expiresOn, DateOnly today, DateTimeOffset now)
