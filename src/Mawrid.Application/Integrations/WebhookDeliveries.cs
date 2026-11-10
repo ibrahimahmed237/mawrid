@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using FluentValidation;
 using Mawrid.Application.Common.Abstractions;
@@ -109,8 +110,20 @@ internal sealed class DeliverWebhooksCommandHandler(IAppDbContext db, ICurrentUs
                 continue;
             }
 
+            string secret;
+            try
+            {
+                secret = secrets.Unprotect(subscription.ProtectedSecret);
+            }
+            catch (CryptographicException)
+            {
+                // The encryption keys were lost or rotated away: an admin must rotate the secret.
+                delivery.RecordFailure(null, "The signing secret cannot be read. Rotate the subscription secret.", now);
+                continue;
+            }
+
             var result = await sender.SendAsync(new WebhookRequest(new Uri(subscription.Url), delivery.EventType, delivery.Id, delivery.Payload,
-                secrets.Unprotect(subscription.ProtectedSecret), clock.UtcNow), cancellationToken);
+                secret, clock.UtcNow), cancellationToken);
             if (result.Success)
             {
                 delivery.RecordSuccess(result.StatusCode!.Value, clock.UtcNow);
