@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A small load smoke test: many parallel readers for a short time, then p50/p95/p99 and the error rate. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+</Project>

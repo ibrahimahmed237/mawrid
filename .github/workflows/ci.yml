@@ -39,11 +39,25 @@ jobs:
           name: test-results
           path: TestResults
 
+      # Production applies migrations with this bundle as a deploy step, never on app startup.
+      - name: Build the migration bundle
+        run: |
+          dotnet tool restore
+          dotnet ef migrations bundle -p src/Mawrid.Infrastructure -s src/Mawrid.Api -o efbundle --self-contained -r linux-x64
+
+      - name: Upload the migration bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: efbundle
+          path: efbundle
+
   docker-image:
     name: Docker image
     runs-on: ubuntu-latest
     needs: build-and-test
     steps:
       - uses: actions/checkout@v4
-      - name: Build image
-        run: docker build -t mawrid-api:ci .
+      - name: Build images
+        run: |
+          docker build -t mawrid-api:ci .
+          docker build -t mawrid-mock-erp:ci -f tools/Mawrid.MockErp/Dockerfile .

@@ -6,6 +6,7 @@
     <Project Path="src/Mawrid.Infrastructure/Mawrid.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/Mawrid.LoadSmoke/Mawrid.LoadSmoke.csproj" />
     <Project Path="tools/Mawrid.MockErp/Mawrid.MockErp.csproj" />
   </Folder>
   <Folder Name="/tests/">
