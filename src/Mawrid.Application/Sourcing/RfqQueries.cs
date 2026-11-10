@@ -56,7 +56,7 @@ internal sealed class GetRfqQueryHandler(IAppDbContext db, ISupplierDirectory su
         return new RfqDto(rfq.Id, rfq.Number, rfq.Title, rfq.Description, rfq.Status.ToString(), rfq.CostCenterId, rfq.Deadline, rfq.Revision,
             rfq.SingleSourceReason,
             rfq.Items.OrderBy(i => i.LineNumber).Select(i => new RfqItemDto(i.LineNumber, i.Description, i.Quantity, i.Unit, i.RequisitionId)).ToList(),
-            rfq.Invitations.Select(i => new InvitedSupplierDto(i.SupplierId, names.GetValueOrDefault(i.SupplierId)?.NameEn ?? "?",
+            rfq.Invitations.OrderBy(i => i.InvitedAtUtc).ThenBy(i => i.SupplierId).Select(i => new InvitedSupplierDto(i.SupplierId, names.GetValueOrDefault(i.SupplierId)?.NameEn ?? "?",
                 names.GetValueOrDefault(i.SupplierId)?.NameAr ?? "?")).ToList(),
             rfq.Awards.OrderBy(a => a.ItemLineNumber).Select(a => new RfqAwardDto(a.ItemLineNumber, a.SupplierId, a.UnitPrice, a.IsLowestPrice, a.Justification)).ToList());
     }

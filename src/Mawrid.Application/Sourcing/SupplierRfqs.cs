@@ -139,5 +139,5 @@ internal static class SupplierRfqAccess
             quotation.NeedsReconfirmation(rfq), quotation.Notes,
             quotation.Lines.OrderBy(l => l.ItemLineNumber).Select(l => new QuotationLineDto(l.ItemLineNumber, l.UnitPrice, l.VatCategory.ToString(), l.LeadTimeDays)).ToList(),
             quotation.AttachmentFileIds),
-        rfq.Awards.Where(a => a.SupplierId == supplierId).Select(a => a.ItemLineNumber).ToList());
+        rfq.Awards.Where(a => a.SupplierId == supplierId).Select(a => a.ItemLineNumber).Order().ToList());
 }
