@@ -350,7 +350,7 @@ flowchart LR
 | ERP (outbound) | Webhooks for `purchase_order.approved` and `supplier_invoice.released`, see below. A mock receiver lives in `tools/Mawrid.MockErp` |
 | ERP (inbound) | Import cost centers by CSV upload or API (later) |
 | File storage | `IFileStorage`: Azure Blob in production, Azurite locally. Allowed file types and size limit. Files are blocked until the virus scan passes |
-| AI extraction | `IInvoiceExtractor`, behind a typed `HttpClient` with timeout, retry and circuit breaker. It returns typed JSON with a confidence score per field. The result is **always** a draft that a person must confirm |
+| AI extraction | Reads PDF-only invoices into a draft (see below). The result is **always** a draft that a person must confirm |
 
 **Webhooks**
 
@@ -371,6 +371,25 @@ sequenceDiagram
 - Body: `{ "id", "type", "occurredAtUtc", "data": { ... } }` in camelCase.
 - The secret is shown once (or chosen by the admin). At rest it is encrypted with ASP.NET Core Data Protection; the keys live in the database so every instance can read them.
 - URLs must be HTTPS (plain HTTP only with `Webhooks:AllowHttp` in development).
+
+**AI extraction**
+
+```mermaid
+flowchart LR
+  PDF[PDF invoice] -->|PdfPig: text layer| T[Text]
+  PO[PO lines] --> P[Prompt]
+  T --> P
+  P -->|OpenAI-compatible /chat/completions| L[Model: JSON + confidence]
+  L --> B[InvoiceDraftBuilder: our checks]
+  B -->|draft + warnings| C[AP clerk checks and corrects]
+  C -->|POST /invoices, extractedWithAi| I[SupplierInvoice: AiAssisted]
+```
+
+- **Providers** behind one `ILlmClient`: Pollinations (free, no account; development and demos only), Ollama (runs locally, invoices stay inside) and OpenAI (paid, key in user-secrets or a vault). All use the same `/chat/completions` API with `response_format: json_object`.
+- **Resilience:** the standard resilience handler (retry with backoff, circuit breaker, attempt and total timeouts sized for slow models). An outage gives `503`, and the clerk can type the invoice in.
+- **Trust:** the model's numbers are checked with plain arithmetic, the VAT number shape and the PO's supplier. A failed check keeps the value but lowers its confidence and adds a warning. The prompt says the invoice text is data, not instructions.
+- **Privacy:** only metadata is logged (provider, model, tokens, time), never the invoice text.
+- **Not yet:** scanned PDFs without a text layer (needs OCR or a vision model), and reading the QR image.
 
 ## 8. Data
 
@@ -414,12 +433,13 @@ RFQs            POST /rfqs · PUT /rfqs/{id} · POST /rfqs/{id}/publish · /amen
 POs             GET /purchase-orders · POST /purchase-orders (direct purchase)
                 PUT /purchase-orders/{id}/terms · POST /purchase-orders/{id}/submit · /send · /cancel · /close
 Receipts        POST /purchase-orders/{id}/receipts
-Invoices        GET /invoices?status=OnHold · POST /invoices (typed in) · POST /invoices/{id}/overrides
+Invoices        GET /invoices?status=OnHold · POST /invoices/extract (AI draft) · POST /invoices (typed in)
+                POST /invoices/{id}/overrides
                 POST /invoices/{id}/recheck · /release · /reject
 Supplier portal POST /supplier/register · PUT /supplier/profile · POST /supplier/documents
                 GET /supplier/rfqs · PUT /supplier/rfqs/{id}/quotation
                 GET /supplier/purchase-orders · POST /supplier/purchase-orders/{id}/acknowledge
-                GET /supplier/invoices · POST /supplier/invoices (XML/PDF file ids) · POST /supplier/invoices/extract
+                GET /supplier/invoices · POST /supplier/invoices (XML/PDF file ids)
 Webhooks        GET, POST, PUT /webhook-subscriptions · POST /webhook-subscriptions/{id}/rotate-secret
                 GET /webhook-deliveries
                 POST /webhook-deliveries/{id}/replay

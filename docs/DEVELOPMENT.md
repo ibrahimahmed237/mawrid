@@ -108,6 +108,14 @@ curl -s http://localhost:8080/api/v1/webhook-subscriptions -H "Authorization: Be
 2. Approve a PO or release an invoice. Within a minute the job sends the webhook. See what arrived: `curl -s http://localhost:8090/webhooks`.
 3. A supplier invoice to start from is in [`docs/samples/ubl-invoice.xml`](samples/ubl-invoice.xml). Change the PO number and VAT number, upload it to `/api/v1/files` as `application/xml`, then post `{"xmlFileId": "<id>"}` to `/api/v1/supplier/invoices`.
 
+## AI invoice extraction
+
+`POST /api/v1/invoices/extract` with `{"pdfFileId": "...", "purchaseOrderId": "..."}` returns a draft with a confidence per value. It works out of the box with **Pollinations** (free, no account). Use made-up invoices only: it is a public service.
+
+- **Local model (Ollama):** `docker compose --profile ai up`, then `docker compose exec ollama ollama pull qwen2.5:3b`, and set `AiExtraction__Provider=Ollama` and `AiExtraction__BaseUrl=http://ollama:11434/v1` for the API.
+- **OpenAI:** `dotnet user-secrets --project src/Mawrid.Api set "AiExtraction:ApiKey" "<key>"` and set `AiExtraction:Provider` to `OpenAI`.
+- The tests use a fake provider. To try the prompt against a real one: `MAWRID_LIVE_AI=Pollinations dotnet test --filter LiveExtraction`.
+
 ## Run the tests
 
 ```bash
@@ -149,6 +157,9 @@ dotnet ef migrations bundle -p src/Mawrid.Infrastructure -s src/Mawrid.Api -o ef
 | `Outbox:PollingInterval`, `Outbox:BatchSize`, `Outbox:MaxAttempts` | Settings | Defaults: 2 seconds, 20, 8 |
 | `Webhooks:AllowHttp` | Settings | Allows `http://` webhook URLs. `true` only in Development (for the mock ERP) |
 | `Webhooks:Timeout` | Settings | How long one webhook call may take. Default 10 seconds |
+| `AiExtraction:Provider` | Settings | `Pollinations` (default, free, no key), `Ollama` or `OpenAI` |
+| `AiExtraction:BaseUrl`, `AiExtraction:Model` | Settings | Override the provider's URL and model |
+| `AiExtraction:ApiKey` | Secrets | Only for OpenAI |
 | `Jobs:Enabled` | Settings | Runs the Hangfire server and its recurring jobs. Default `true`; tests set `false` |
 | `Jobs:OutboxRetention` | Settings | How long processed outbox messages are kept. Default 7 days |
 | `Seed:Bootstrap`, `Seed:DemoData` | Settings | First organization and admin; demo data (Development only) |

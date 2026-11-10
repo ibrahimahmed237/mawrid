@@ -326,3 +326,45 @@ flowchart LR
 3. How does a webhook receiver know a call really came from you, and is not a replay?
 4. How do you retry outgoing HTTP calls without losing them when the app restarts?
 5. Why is the invoice checker a pure function, and how does that help testing?
+
+### M8 — AI extraction for PDF invoices
+
+**What we built:** an endpoint that reads a PDF invoice with a language model and returns a draft with a confidence per value. A person confirms it; the saved invoice is marked `AiAssisted` and needs a second person to release it.
+
+```mermaid
+sequenceDiagram
+  participant C as AP clerk
+  participant API as Mawrid
+  participant AI as Model (Pollinations / Ollama / OpenAI)
+  C->>API: POST /invoices/extract (PDF, PO)
+  API->>API: PdfPig reads the text layer
+  API->>AI: system prompt + PO lines + invoice text
+  AI-->>API: JSON with values and confidence
+  API->>API: arithmetic, VAT number and PO checks
+  API-->>C: draft + warnings (nothing saved)
+  C->>API: POST /invoices (corrected, extractedWithAi)
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| Typed `HttpClient` + `AddStandardResilienceHandler()` | `OpenAiCompatibleLlmClient` | `HttpService` with `axios-retry` and a circuit breaker library (`opossum`) |
+| Named options for one pipeline | `HttpStandardResilienceOptions` configured from `AiExtractionOptions` | A config factory per provider |
+| `System.Text.Json` into private records | `InvoiceDraftBuilder` parses the model's JSON | `class-transformer` + `class-validator` on the LLM output |
+| A custom `FactAttribute` that skips | `LiveAiFact` (runs only with `MAWRID_LIVE_AI`) | `describe.skip` based on an env var |
+
+**Decisions worth explaining**
+
+- **The AI never creates an invoice.** It returns a draft. People confirm every value, and a second person releases. If the model is wrong, the three-way match still catches price and quantity problems.
+- **Do not trust the model's numbers.** We check them with arithmetic (quantity × price, totals), the VAT number shape (15 digits, starts and ends with 3) and the PO's supplier. A failed check lowers the confidence instead of hiding the value, so the screen can highlight it.
+- **One interface, three providers.** Pollinations, Ollama and OpenAI all speak the OpenAI `/chat/completions` API. Changing provider is configuration, not code.
+- **Prompt injection.** The invoice text comes from outside. The prompt fences it and says it is data. The output is only a draft, so an injected instruction cannot release money.
+- **Fake in tests, real once by hand.** CI uses a fake HTTP handler (fast, no network). A live test checks the prompt with a real model when you ask for it.
+- **Logs without content.** We log provider, model, tokens and time, never the invoice text.
+
+**Likely interview questions**
+
+1. How do you make an LLM feature safe in a finance workflow?
+2. How do you get reliable JSON out of a model, and what do you do when it is wrong?
+3. What does `AddStandardResilienceHandler` add, and why change its timeouts for a model?
+4. How do you test code that calls an AI service?
+5. What is prompt injection, and how did you limit its impact here?
