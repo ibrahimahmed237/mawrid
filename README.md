@@ -21,6 +21,16 @@ One purchase from request to payment: real API calls against SQL Server, recorde
 
 ![Mawrid demo: requisition, approval matrix, sealed RFQ, PO, goods receipt, invoice hold, release and ERP webhook](docs/media/demo.gif)
 
+
+
+
+https://github.com/user-attachments/assets/f48cd85c-2af3-4452-9f7f-130bf768ca17
+
+
+
+
+
+
 ## What it does
 
 - **Approvals:** a configurable matrix by amount and cost center, approver groups, delegation, and separation of duties.
