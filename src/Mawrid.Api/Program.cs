@@ -32,7 +32,7 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options => options.GetLevel = RequestLogLevel.For);
 
 if (app.Environment.IsDevelopment())
 {

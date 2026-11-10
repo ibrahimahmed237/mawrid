@@ -15,6 +15,13 @@ public sealed partial class GlobalExceptionHandler(
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
+        // The client closed the connection. Nobody is waiting for a response, and it is not our bug.
+        if (exception is OperationCanceledException && httpContext.RequestAborted.IsCancellationRequested)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+            return true;
+        }
+
         ProblemDetails problem;
 
         if (exception is RequestValidationException validation)
