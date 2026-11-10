@@ -7,6 +7,7 @@ namespace Mawrid.Infrastructure.Outbox;
 
 /// <summary>
 /// Degraded when an outbox message has waited too long: notifications and webhooks are late.
+/// Dead-lettered messages (out of retries) are left out; they need a person, not a health probe.
 /// The app can still serve requests, so this is "degraded", not "unhealthy".
 /// </summary>
 public sealed class OutboxHealthCheck(AppDbContext db, IClock clock) : IHealthCheck
@@ -17,7 +18,7 @@ public sealed class OutboxHealthCheck(AppDbContext db, IClock clock) : IHealthCh
     {
         var limit = clock.UtcNow - MaxDelay;
         var oldest = await db.OutboxMessages.AsNoTracking()
-            .Where(m => m.ProcessedOnUtc == null && m.NextAttemptAtUtc < limit)
+            .Where(m => m.ProcessedOnUtc == null && m.DeadLetteredOnUtc == null && m.NextAttemptAtUtc < limit)
             .OrderBy(m => m.NextAttemptAtUtc)
             .Select(m => (DateTimeOffset?)m.NextAttemptAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
