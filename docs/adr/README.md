@@ -11,3 +11,5 @@ Each record explains one important decision: the context, what we chose, and the
 | [0005](0005-dependency-licensing.md) | Library license rules | Accepted |
 | [0006](0006-buyer-side-invoice-ingestion.md) | Receive and check supplier invoices (buyer side) | Accepted |
 | [0007](0007-sealed-quotations.md) | Sealed quotations until the RFQ closes | Accepted |
+| [0008](0008-ef-core-in-application-layer.md) | Use EF Core directly in the Application layer | Accepted |
+| [0009](0009-controllers-for-http-endpoints.md) | Use controllers for HTTP endpoints | Accepted |

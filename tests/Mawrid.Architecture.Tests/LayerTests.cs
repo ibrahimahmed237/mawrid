@@ -34,9 +34,10 @@ public class LayerTests
     [Fact]
     public void Application_does_not_depend_on_infrastructure_api_or_web_frameworks()
     {
+        // The EF Core core package is allowed (ADR-0008); the SQL Server provider is not.
         var result = Types.InAssembly(ApplicationAssembly)
             .ShouldNot()
-            .HaveDependencyOnAny(Infrastructure, Api, "Microsoft.EntityFrameworkCore", "Microsoft.AspNetCore")
+            .HaveDependencyOnAny(Infrastructure, Api, "Microsoft.EntityFrameworkCore.SqlServer", "Microsoft.Data.SqlClient", "Microsoft.AspNetCore")
             .GetResult();
 
         result.IsSuccessful.Should().BeTrue(Describe(result));
