@@ -31,3 +31,41 @@ My notes while building Mawrid. I come from Node.js, NestJS and TypeScript. Most
 ## Milestone notes
 
 Each milestone adds a section here: what we built, the .NET idea behind it, and the questions an interviewer will probably ask.
+
+### M1 — Skeleton
+
+**What we built:** the solution layout, shared build settings, the request pipeline, the error contract, health checks, logging, telemetry, Docker and CI.
+
+```mermaid
+flowchart LR
+  req[HTTP request] --> corr[Correlation id] --> exc[Exception handler] --> ctrl[Controller]
+  ctrl --> med[MediatR] --> log[LoggingBehavior] --> val[ValidationBehavior] --> h[Handler]
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| `Directory.Build.props` | Repo root | A shared `tsconfig` base that every project extends |
+| Central package management (`Directory.Packages.props`) | Repo root | One `package.json` with pinned versions for the whole monorepo |
+| `IServiceCollection` extension methods | `AddApplication()`, `AddInfrastructure()` | A module's `providers` array |
+| Middleware order | `Program.cs` | `app.use(...)` order |
+| `IExceptionHandler` + `ProblemDetails` | `GlobalExceptionHandler` | A global exception filter |
+| `IPipelineBehavior` | `LoggingBehavior`, `ValidationBehavior` | Interceptors around every handler |
+| `[LoggerMessage]` source-generated logging | Behaviors, exception handler | No real equivalent; it generates fast, typed log methods at compile time |
+| Health checks | `HealthSetup` | `@nestjs/terminus` |
+| `WebApplicationFactory<Program>` | `Mawrid.Api.Tests` | `Test.createTestingModule` + supertest |
+| Testcontainers | `MawridApiFactory` | Same library exists for Node |
+
+**Decisions worth explaining**
+
+- **Validation errors are exceptions; business failures are `Result`.** Bad input is the caller's bug and the request cannot even start, so the pipeline stops it early and returns 400. "The deadline has passed" is a normal business outcome, so the handler returns it as a value with a stable code.
+- **Liveness vs readiness.** If the database is down, restarting the app does not help. So `/health/live` checks nothing, and only `/health/ready` checks SQL Server. The orchestrator stops sending traffic but does not kill the container.
+- **The correlation id is validated.** We accept only short ids of letters, digits, `-` and `_`. Anything else is replaced, so a caller cannot inject text into our logs.
+- **Migrations on startup only in Development and tests.** In production, several instances starting at once could all try to migrate. A migration bundle runs once, as a deploy step.
+
+**Likely interview questions**
+
+1. What is the difference between `AddScoped`, `AddTransient` and `AddSingleton`? Why is `DbContext` scoped?
+2. Why does the order of middleware matter? What happens if `UseExceptionHandler` comes after the controllers?
+3. How do you test an ASP.NET Core API end to end without mocking the database?
+4. What is the difference between liveness and readiness probes?
+5. Why use central package management in a multi-project solution?
