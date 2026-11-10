@@ -5,6 +5,7 @@ using Mawrid.Application.Common.Persistence;
 using Mawrid.Application.Common.Security;
 using Mawrid.Application.Contracts.Files;
 using Mawrid.Application.Contracts.Purchasing;
+using Mawrid.Application.Contracts.Suppliers;
 using Mawrid.Domain.Common;
 using Mawrid.Domain.Payables;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,8 @@ namespace Mawrid.Application.Payables;
 public sealed record SubmitInvoiceCommand(Guid XmlFileId, Guid? PdfFileId) : ICommand<Guid>;
 
 internal sealed class SubmitInvoiceCommandHandler(
-    IAppDbContext db, ICurrentUser currentUser, IFileReferences files, IPurchaseOrderInvoicing purchaseOrders, InvoiceChecks checks, IClock clock)
+    IAppDbContext db, ICurrentUser currentUser, IFileReferences files, IPurchaseOrderInvoicing purchaseOrders, ISupplierDirectory suppliers,
+    InvoiceChecks checks, IClock clock)
     : ICommandHandler<SubmitInvoiceCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(SubmitInvoiceCommand command, CancellationToken cancellationToken)
@@ -44,6 +46,13 @@ internal sealed class SubmitInvoiceCommandHandler(
         if (parsed.IsFailure)
         {
             return parsed.Error!;
+        }
+
+        // The seller in the XML must be the supplier who sends it.
+        var supplier = await suppliers.FindAsync(supplierId, cancellationToken);
+        if (parsed.Value.SellerVatNumber is { } sellerVat && sellerVat != supplier?.VatNumber)
+        {
+            return PayablesErrors.SellerVatMismatch;
         }
 
         // A PO of another supplier gets the same answer as an unknown PO: suppliers must not probe numbers.

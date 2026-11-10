@@ -121,11 +121,22 @@ public sealed class InvoiceTests(MawridApiFactory factory)
     public async Task A_supplier_cannot_invoice_another_suppliers_po()
     {
         var flow = await PayablesFlow.StartAsync(factory);
-        var other = flow.Purchasing.Sourcing.ApprovedSuppliers[1].User;
+        var (otherId, other) = flow.Purchasing.Sourcing.ApprovedSuppliers[1];
+        var otherVat = (await (await flow.Admin.GetAsync($"/api/v1/suppliers/{otherId}")).ShouldBeOkAsync<SupplierDto>()).VatNumber;
+        var invoice = new UblInvoiceBuilder("INV-7001", flow.PurchaseOrderNumber, otherVat).Line(1, "Laptop 14 inch", 6m, 3_900m);
 
-        var response = await flow.SubmitAsync(flow.MatchingInvoice("INV-7001"), other);
+        var response = await flow.SubmitAsync(invoice, other);
 
         await response.ShouldBeProblemAsync(HttpStatusCode.UnprocessableEntity, "invoice.po_not_invoiceable");
+    }
+
+    [Fact]
+    public async Task An_invoice_with_another_sellers_vat_number_is_refused()
+    {
+        var flow = await PayablesFlow.StartAsync(factory);
+        var invoice = new UblInvoiceBuilder("INV-7101", flow.PurchaseOrderNumber, "399999999900003").Line(1, "Laptop 14 inch", 6m, 3_900m);
+
+        await (await flow.SubmitAsync(invoice)).ShouldBeProblemAsync(HttpStatusCode.UnprocessableEntity, "invoice.seller_vat_mismatch");
     }
 
     [Fact]
