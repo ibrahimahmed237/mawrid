@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,11 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
 
     private readonly MsSqlContainer _sqlServer = new MsSqlBuilder(SqlServerImage).Build();
 
-    public string ConnectionString => _sqlServer.GetConnectionString();
+    /// <summary>Points at a test database (not master), created by the migrations on startup.</summary>
+    public string ConnectionString => new SqlConnectionStringBuilder(_sqlServer.GetConnectionString())
+    {
+        InitialCatalog = "MawridTests",
+    }.ConnectionString;
 
     public Task InitializeAsync() => _sqlServer.StartAsync();
 
@@ -30,6 +35,7 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", ConnectionString);
+        builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.ConfigureTestServices(services =>
             services.AddControllers().AddApplicationPart(typeof(MawridApiFactory).Assembly));
     }
