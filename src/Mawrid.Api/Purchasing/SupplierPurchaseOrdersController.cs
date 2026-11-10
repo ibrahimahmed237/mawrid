@@ -4,12 +4,14 @@ using Mawrid.Application.Common.Paging;
 using Mawrid.Application.Purchasing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Mawrid.Api.Purchasing;
 
 /// <summary>Purchase orders from the supplier's side. A supplier sees only its own POs, once sent.</summary>
 [Route("api/v1/supplier/purchase-orders")]
 [Authorize(Policy = Policies.SupplierUser)]
+[EnableRateLimiting(RateLimits.SupplierPortal)]
 public sealed class SupplierPurchaseOrdersController : ApiControllerBase
 {
     [HttpGet]

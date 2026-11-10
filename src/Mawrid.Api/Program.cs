@@ -3,6 +3,7 @@ using Mawrid.Api.Common.Errors;
 using Mawrid.Api.Common.Health;
 using Mawrid.Api.Common.Idempotency;
 using Mawrid.Api.Common.Observability;
+using Mawrid.Api.Common.OpenApi;
 using Mawrid.Api.Common.Security;
 using Mawrid.Api.Notifications;
 using Mawrid.Application;
@@ -21,10 +22,11 @@ builder.Services
     .AddInfrastructure(builder.Configuration)
     .AddApiHealthChecks()
     .AddApiAuthentication()
-    .AddApiNotifications();
+    .AddApiNotifications()
+    .AddApiRateLimiting();
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddApiOpenApi();
 
 var app = builder.Build();
 
@@ -39,18 +41,25 @@ await app.Services.SeedAsync();
 
 // Order matters: the correlation id must exist before anything logs or fails.
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseSerilogRequestLogging(options => options.GetLevel = RequestLogLevel.For);
 
-if (app.Environment.IsDevelopment())
+// The OpenAPI document is public in Development, and in Testing for the contract test.
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 {
     app.MapOpenApi().AllowAnonymous();
+}
+else
+{
+    app.UseHsts();
 }
 
 app.UseAuthentication();
 app.UseMiddleware<CurrentUserMiddleware>();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapApiHealthChecks();

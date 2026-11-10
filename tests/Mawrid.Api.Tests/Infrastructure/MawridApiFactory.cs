@@ -65,6 +65,11 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("Outbox:Enabled", "false");
         builder.UseSetting("Jobs:Enabled", "false");
 
+        // Many test users log in from the same address; RateLimitTests lowers the limits again.
+        builder.UseSetting("RateLimits:LoginPerMinute", "100000");
+        builder.UseSetting("RateLimits:SupplierPerMinute", "100000");
+        builder.UseSetting("RateLimits:AiExtractionPerMinute", "100000");
+
         builder.ConfigureTestServices(services =>
         {
             services.AddControllers().AddApplicationPart(typeof(MawridApiFactory).Assembly);

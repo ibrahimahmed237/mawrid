@@ -22,6 +22,7 @@ public static class ProblemDetailsSetup
                     StatusCodes.Status404NotFound => ErrorCodes.NotFound,
                     StatusCodes.Status405MethodNotAllowed => ErrorCodes.MethodNotAllowed,
                     StatusCodes.Status400BadRequest => ErrorCodes.ValidationFailed,
+                    StatusCodes.Status429TooManyRequests => ErrorCodes.RateLimited,
                     _ => ErrorCodes.Http,
                 };
             }

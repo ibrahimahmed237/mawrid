@@ -7,6 +7,7 @@ using Mawrid.Application.Payables;
 using Mawrid.Application.Payables.Extraction;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Mawrid.Api.Payables;
 
@@ -44,6 +45,7 @@ public sealed class InvoicesController : ApiControllerBase
     /// Reads a PDF invoice with AI and returns a draft with a confidence per value. Nothing is saved:
     /// check the draft, then post it to <c>POST /invoices</c> with <c>extractedWithAi: true</c>.
     /// </summary>
+    [EnableRateLimiting(RateLimits.AiExtraction)]
     [HttpPost("extract")]
     [ProducesResponseType<InvoiceDraftDto>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Extract(ExtractRequest request, CancellationToken cancellationToken) =>

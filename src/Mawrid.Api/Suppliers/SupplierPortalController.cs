@@ -3,12 +3,14 @@ using Mawrid.Api.Common.Security;
 using Mawrid.Application.Suppliers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Mawrid.Api.Suppliers;
 
 /// <summary>Endpoints for supplier users, about their own company.</summary>
 [Route("api/v1/supplier")]
 [Authorize(Policy = Policies.SupplierUser)]
+[EnableRateLimiting(RateLimits.SupplierPortal)]
 public sealed class SupplierPortalController : ApiControllerBase
 {
     [HttpGet("profile")]

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Mawrid.Infrastructure.Files;
+using Mawrid.Infrastructure.Outbox;
 using Mawrid.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -10,7 +11,7 @@ namespace Mawrid.Api.Common.Health;
 /// Two health endpoints, as used by Docker and Kubernetes:
 /// <list type="bullet">
 /// <item><c>/health/live</c>: the process is running. No dependencies are checked.</item>
-/// <item><c>/health/ready</c>: the app can serve traffic (the database answers).</item>
+/// <item><c>/health/ready</c>: the app can serve traffic (database and storage answer). A late outbox shows as "Degraded".</item>
 /// </list>
 /// </summary>
 public static class HealthSetup
@@ -21,7 +22,8 @@ public static class HealthSetup
     {
         services.AddHealthChecks()
             .AddDbContextCheck<AppDbContext>("sql-server", tags: [ReadyTag])
-            .AddCheck<BlobStorageHealthCheck>("blob-storage", tags: [ReadyTag]);
+            .AddCheck<BlobStorageHealthCheck>("blob-storage", tags: [ReadyTag])
+            .AddCheck<OutboxHealthCheck>("outbox", tags: [ReadyTag]);
         return services;
     }
 

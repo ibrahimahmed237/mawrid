@@ -5,12 +5,14 @@ using Mawrid.Api.Common.Security;
 using Mawrid.Application.Payables;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Mawrid.Api.Payables;
 
 /// <summary>Invoices from the supplier's side: send a UBL e-invoice and follow its status.</summary>
 [Route("api/v1/supplier/invoices")]
 [Authorize(Policy = Policies.SupplierUser)]
+[EnableRateLimiting(RateLimits.SupplierPortal)]
 public sealed class SupplierInvoicesController : ApiControllerBase
 {
     [HttpGet]

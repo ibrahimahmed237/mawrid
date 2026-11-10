@@ -4,12 +4,14 @@ using Mawrid.Api.Common.Security;
 using Mawrid.Application.Sourcing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Mawrid.Api.Sourcing;
 
 /// <summary>RFQs from the supplier's side.</summary>
 [Route("api/v1/supplier/rfqs")]
 [Authorize(Policy = Policies.SupplierUser)]
+[EnableRateLimiting(RateLimits.SupplierPortal)]
 public sealed class SupplierRfqsController : ApiControllerBase
 {
     [HttpGet]
