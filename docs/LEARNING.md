@@ -154,3 +154,45 @@ stateDiagram-v2
 3. What is the four-eyes principle, and where does it matter in finance?
 4. How do you validate an uploaded file safely?
 5. How do modules in a modular monolith talk to each other without coupling?
+
+### M4 — Approval engine and requisitions
+
+**What we built:** a data-driven approval matrix, approver groups, delegation, and purchase requisitions that go through it.
+
+```mermaid
+sequenceDiagram
+  participant R as Requester
+  participant PR as Requisitions
+  participant AP as Approvals
+  participant M as Manager / Director / CFO
+  R->>PR: submit PR (net 200,000 SAR)
+  PR->>AP: StartAsync(amount incl. VAT = 230,000)
+  AP-->>PR: approval id (saved in the same transaction)
+  M->>AP: approve step 1, 2, 3 (in order)
+  AP->>PR: OnApprovedAsync (same transaction as the last approval)
+  PR-->>R: status Approved
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| Primitive collections (`List<Guid>` as JSON) | `ApproverGroup.MemberUserIds`, `ApprovalStep.EligibleApproverIds` | A `jsonb` column in Prisma |
+| Value converter to a JSON column | `ApprovalPolicy` rules | `@Column({ type: 'json' })` |
+| `ComplexProperty` | `Organization.Settings` | An embedded entity |
+| Raw SQL with `SqlQuery<T>` | `DocumentNumbers` (`MERGE ... HOLDLOCK`) | `prisma.$queryRaw` |
+| `IEnumerable<T>` injection (all implementations) | `IApprovalDocumentHandler` | Injecting a multi-provider token |
+| ETag / If-Match | `ApprovalsController`, `ETags` | Writing the headers by hand |
+
+**Decisions worth explaining**
+
+- **Copy the rule at start.** The request stores the steps and the eligible approvers when it starts. If an admin changes the matrix tomorrow, approvals already in progress do not change under people's feet.
+- **The document module decides what "approved" means.** Approvals knows nothing about requisitions. Each document module implements `IApprovalDocumentHandler`; the last approval calls it in the same transaction, so the requisition and the approval never disagree.
+- **Two kinds of concurrency protection.** The `RowVersion` stops two simultaneous decisions (409). `If-Match` stops a decision based on an old screen (412).
+- **Document numbers from one `MERGE`.** `HOLDLOCK` makes the read-and-increment atomic, so two requests never get the same number. A failed save leaves a gap; that is fine for internal documents.
+
+**Likely interview questions**
+
+1. How would you design a configurable approval workflow?
+2. What is segregation of duties, and how do you enforce it in code?
+3. Difference between optimistic and pessimistic concurrency? When does each fit?
+4. How do you generate gap-free or unique sequential numbers in SQL Server?
+5. How do two modules stay consistent without calling each other's database tables?
