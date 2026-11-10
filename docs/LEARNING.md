@@ -69,3 +69,49 @@ flowchart LR
 3. How do you test an ASP.NET Core API end to end without mocking the database?
 4. What is the difference between liveness and readiness probes?
 5. Why use central package management in a multi-project solution?
+
+### M2 — Identity, tenancy, audit and outbox
+
+**What we built:** login with JWT and rotating refresh tokens, users and cost centers, a tenant filter on every query, audit rows, and a transactional outbox.
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant A as API
+  participant DB as SQL Server
+  C->>A: POST /auth/login (email, password)
+  A->>DB: check password (Identity), store refresh token hash
+  A-->>C: access token (15 min) + refresh token
+  C->>A: POST /auth/refresh (refresh token)
+  A->>DB: mark old token used, store the next one (same family)
+  A-->>C: new pair
+  Note over C,A: If an old token comes back, every token in its family is revoked
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| ASP.NET Core Identity (`UserManager`) | `IdentityService` | Passport local strategy + bcrypt, written by hand |
+| JWT bearer authentication | `AuthenticationSetup` | `@nestjs/jwt` + `JwtAuthGuard` |
+| Fallback authorization policy | `Policies.Configure` | A global guard |
+| Policies (`RequireRole`, `RequireAssertion`) | `Policies` | Role guards with `@Roles()` |
+| EF Core named query filters (new in EF 10) | `AppDbContext` | Prisma middleware that adds `where: { orgId }` |
+| `SaveChangesInterceptor` | `AuditingInterceptor`, `OutboxInterceptor` | Prisma `$extends` query hooks |
+| `BackgroundService` + `PeriodicTimer` | `OutboxWorker` | A BullMQ repeatable job |
+| `IOptions<T>` + `ValidateOnStart` | `JwtOptions`, `OutboxOptions` | `ConfigModule` with a Joi schema |
+
+**Decisions worth explaining**
+
+- **Two user records.** `User` (Domain) holds business data: roles and organization. `UserCredential` (Identity) holds the password hash and lockout. They share one id. The domain stays free of framework code.
+- **Refresh token rotation with reuse detection.** A refresh token works once. If a used token comes back, someone copied it, so we revoke the whole family. `UsedAtUtc` is a concurrency token, so two requests with the same token at the same moment cannot both win.
+- **Tenant from the token only.** The organization id comes from the `org` claim, never from the URL or body. Without a token, `OrganizationId` is null and tenant queries return nothing: the safe default.
+- **Audit from the change tracker.** One row per changed record, in the same transaction, with old and new values. Secrets (hashes, stamps) are never written. Enums are written by name.
+- **Outbox claim with `READPAST`.** One `UPDATE` picks the oldest due messages and locks them for 5 minutes. A second worker skips locked rows instead of waiting. Delivery is at-least-once, so handlers must be idempotent.
+
+**Likely interview questions**
+
+1. Why short access tokens plus refresh tokens instead of one long token?
+2. How do you detect a stolen refresh token?
+3. How do you make sure one tenant never sees another tenant's data? What is the risk of `IgnoreQueryFilters`?
+4. What problem does the outbox pattern solve? Why not publish the event right after `SaveChanges`?
+5. How do two outbox workers avoid sending the same message twice?
+6. Why does login for an unknown email still hash a password?

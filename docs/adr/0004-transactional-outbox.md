@@ -12,7 +12,7 @@ State changes cause side effects: audit rows, SignalR notifications, emails and 
 
 ## Decision
 
-- **Audit rows** are written **in the same transaction** as the change. A `SaveChanges` interceptor builds them from the domain events raised by aggregates.
+- **Audit rows** are written **in the same transaction** as the change. A `SaveChanges` interceptor builds them from EF Core's change tracker: every added, changed or deleted record of an aggregate, with old and new values. (We first planned to build them from domain events, but the change tracker records every change, even ones that raise no event.)
 - **Side effects** are written as rows in an `OutboxMessages` table, in the same transaction.
 - A background worker reads the outbox, sends each message, and marks it as processed.
   - It uses `UPDLOCK, READPAST`, so two app instances never pick the same row.

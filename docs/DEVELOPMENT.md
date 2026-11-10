@@ -43,6 +43,32 @@ Check that it works:
 
 With `dotnet run` the port is the one shown in the console (see `launchSettings.json`).
 
+## Demo data
+
+In Development the app creates the organization **Acme Trading** with two cost centers (`IT-001`, `OPS-001`) and one user per role. Every demo user has the password `Mawrid-Demo-2026`.
+
+| Email | Role |
+|---|---|
+| `admin@acme.test` | Admin |
+| `buyer@acme.test` | Buyer |
+| `approver@acme.test` | Approver for `IT-001` |
+| `director@acme.test` | Approver (all cost centers) |
+| `requester@acme.test` | Requester for `IT-001` |
+| `receiver@acme.test` | Receiver |
+| `ap@acme.test` | AP clerk |
+
+Log in and call the API:
+
+```bash
+TOKEN=$(curl -s http://localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@acme.test","password":"Mawrid-Demo-2026"}' | jq -r .accessToken)
+
+curl -s http://localhost:8080/api/v1/me -H "Authorization: Bearer $TOKEN"
+```
+
+In production, set `Seed:Bootstrap` (organization name, admin email and password) once to create the first organization and admin. Keep `Seed:DemoData` off.
+
 ## Run the tests
 
 ```bash
@@ -79,6 +105,10 @@ dotnet ef migrations bundle -p src/Mawrid.Infrastructure -s src/Mawrid.Api -o ef
 | `ConnectionStrings:Default` | `appsettings.Development.json`, or env `ConnectionStrings__Default` | Required. The app does not start without it |
 | `Database:MigrateOnStartup` | Development settings | `true` locally, `false` in production |
 | `Serilog:MinimumLevel` | `appsettings*.json` | Log levels |
+| `Jwt:SigningKey` | Secrets | Required. At least 32 characters |
+| `Jwt:AccessTokenMinutes`, `Jwt:RefreshTokenDays` | Settings | Defaults: 15 minutes, 14 days |
+| `Outbox:PollingInterval`, `Outbox:BatchSize`, `Outbox:MaxAttempts` | Settings | Defaults: 2 seconds, 20, 8 |
+| `Seed:Bootstrap`, `Seed:DemoData` | Settings | First organization and admin; demo data (Development only) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Environment | Turns on trace and metric export |
 
 Secrets (passwords, API keys) go in [user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) locally, never in a committed file:
