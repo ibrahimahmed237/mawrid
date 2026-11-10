@@ -1,5 +1,5 @@
-using Mawrid.Domain.Common;
 using Mawrid.Application.Common.Security;
+using Mawrid.Domain.Common;
 using Mawrid.Domain.Identity;
 
 namespace Mawrid.Infrastructure.Identity;

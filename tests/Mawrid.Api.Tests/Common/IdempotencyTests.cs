@@ -16,7 +16,10 @@ public class IdempotencyTests(MawridApiFactory factory)
             Headers = { { IdempotencyMiddleware.HeaderName, key } },
             Content = JsonContent.Create(new
             {
-                nameAr = "مورد", nameEn = name, vatNumber, crNumber = "1010123456",
+                nameAr = "مورد",
+                nameEn = name,
+                vatNumber,
+                crNumber = "1010123456",
                 contact = new { name = "Ali", email = "ali@x.sa" },
             }),
         };

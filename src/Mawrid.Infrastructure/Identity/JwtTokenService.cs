@@ -1,8 +1,8 @@
-using Mawrid.Domain.Common;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Mawrid.Application.Common.Security;
+using Mawrid.Domain.Common;
 using Mawrid.Domain.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;

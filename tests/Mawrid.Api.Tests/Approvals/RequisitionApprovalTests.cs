@@ -139,7 +139,9 @@ public class RequisitionApprovalTests(MawridApiFactory factory)
 
         var response = await flow.Manager.PostAsJsonAsync("/api/v1/requisitions", new
         {
-            costCenterId = flow.CostCenterId, title = "Chairs", justification = "Our chairs are broken and unsafe.",
+            costCenterId = flow.CostCenterId,
+            title = "Chairs",
+            justification = "Our chairs are broken and unsafe.",
             neededBy = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)),
             lines = new[] { new { description = "Office chair", quantity = 2m, unit = "pcs", estimatedUnitPrice = 800m } },
         });
@@ -189,8 +191,12 @@ public class RequisitionApprovalTests(MawridApiFactory factory)
         var largeDirect = await flow.Buyer.PostAsJsonAsync($"/api/v1/requisitions/{large.Id}/sourcing-route", new { route = "DirectPurchase" });
         var settings = await flow.Admin.PutAsJsonAsync("/api/v1/organization/settings", new
         {
-            directPurchaseLimit = 10_000m, minimumSuppliersPerRfq = 3, minimumRfqWindowDays = 3,
-            priceTolerancePercent = 2m, priceToleranceMaxAmount = 500m, overDeliveryPercent = 0m,
+            directPurchaseLimit = 10_000m,
+            minimumSuppliersPerRfq = 3,
+            minimumRfqWindowDays = 3,
+            priceTolerancePercent = 2m,
+            priceToleranceMaxAmount = 500m,
+            overDeliveryPercent = 0m,
         });
         var largeAfterChange = await flow.Buyer.PostAsJsonAsync($"/api/v1/requisitions/{large.Id}/sourcing-route", new { route = "DirectPurchase" });
 

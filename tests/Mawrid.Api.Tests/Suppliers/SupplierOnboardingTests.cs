@@ -36,7 +36,10 @@ public class SupplierOnboardingTests(MawridApiFactory factory)
 
         var duplicate = await flow.Buyer.PostAsJsonAsync("/api/v1/suppliers", new
         {
-            nameAr = "مورد آخر", nameEn = "Another Supplier", vatNumber = vat, crNumber = "1010999999",
+            nameAr = "مورد آخر",
+            nameEn = "Another Supplier",
+            vatNumber = vat,
+            crNumber = "1010999999",
             contact = new { name = "Ali", email = "ali@x.sa" },
         });
 
@@ -50,7 +53,10 @@ public class SupplierOnboardingTests(MawridApiFactory factory)
 
         var response = await flow.Buyer.PostAsJsonAsync("/api/v1/suppliers", new
         {
-            nameAr = "مورد", nameEn = "Supplier", vatNumber = "123456789012345", crNumber = "1010999999",
+            nameAr = "مورد",
+            nameEn = "Supplier",
+            vatNumber = "123456789012345",
+            crNumber = "1010999999",
             contact = new { name = "Ali", email = "ali@x.sa" },
         });
 
@@ -154,8 +160,11 @@ public class SupplierOnboardingTests(MawridApiFactory factory)
 
         var response = await flow.Admin.PostAsJsonAsync("/api/v1/users", new
         {
-            email = TestData.UniqueEmail(), displayName = "Ghost", password = TestData.Password,
-            roles = new[] { new { role = "Supplier" } }, supplierId = Guid.NewGuid(),
+            email = TestData.UniqueEmail(),
+            displayName = "Ghost",
+            password = TestData.Password,
+            roles = new[] { new { role = "Supplier" } },
+            supplierId = Guid.NewGuid(),
         });
 
         await response.ShouldBeProblemAsync(HttpStatusCode.NotFound, "user.supplier_not_found");

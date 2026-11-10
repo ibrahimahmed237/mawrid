@@ -1,10 +1,10 @@
-using Mawrid.Domain.Common;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Mawrid.Api.Tests.Infrastructure;
 using Mawrid.Application.Identity.Auth;
 using Mawrid.Application.Identity.Users;
+using Mawrid.Domain.Common;
 using Mawrid.Domain.Identity;
 
 namespace Mawrid.Api.Tests.Identity;

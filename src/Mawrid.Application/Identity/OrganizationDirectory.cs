@@ -1,7 +1,7 @@
-using Mawrid.Domain.Common;
 using Mawrid.Application.Common.Persistence;
 using Mawrid.Application.Common.Security;
 using Mawrid.Application.Contracts.Identity;
+using Mawrid.Domain.Common;
 using Mawrid.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 

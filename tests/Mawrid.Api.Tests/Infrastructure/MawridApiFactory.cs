@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Data.SqlClient;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Mawrid.Application.Common.Abstractions;
 using Mawrid.Infrastructure.Notifications;
 using MediatR;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.Azurite;
 using Testcontainers.MsSql;
