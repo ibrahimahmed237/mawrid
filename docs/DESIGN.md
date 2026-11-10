@@ -266,6 +266,8 @@ A single delivery of everything goes straight from `Sent` or `Acknowledged` to `
 | Concurrency | Every state change accepts `If-Match`; a stale version gives `412` |
 | Totals | Calculated in the domain, line by line: VAT per line, rounded half away from zero to 2 decimals |
 
+Not yet: change orders with re-approval, and reopening the requisition when a PO is cancelled.
+
 **Goods receipt** (part of the PO aggregate)
 
 - Each line has the quantity accepted, the quantity rejected, and a reason for any rejection.
@@ -571,6 +573,7 @@ Later: budgets, PO change orders with re-approval, credit notes, approvals for i
 | Each customer has a different approval matrix | The rules are data, not code. Start with amount + cost center; add category when a customer needs it |
 | AI extraction makes mistakes | A confidence per value, our own arithmetic checks, a person always confirms, and a second person releases. Scans without text are refused |
 | Free AI services are public | Pollinations is for development and demos with made-up invoices. Real invoices go to Ollama (on our servers) or a paid provider with a data agreement |
+| Webhook URLs could point at internal hosts (SSRF) | Only admins create them and HTTPS is required. Next: refuse private and link-local addresses when sending, or keep an allowlist of ERP hosts |
 | Outbox polling under higher load | Fine at these volumes. If needed, switch to a message broker (e.g. Service Bus) behind the same interface |
 | Open: should suppliers see their rank after the award? | Default: no. Decide with the pilot customer |
 | Open: can a supplier invoice before everything is received? | Default: yes, up to the accepted quantity |
