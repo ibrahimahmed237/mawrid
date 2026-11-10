@@ -1,6 +1,7 @@
 using Mawrid.Domain.Approvals;
 using Mawrid.Domain.Files;
 using Mawrid.Domain.Identity;
+using Mawrid.Domain.Integrations;
 using Mawrid.Domain.Payables;
 using Mawrid.Domain.Purchasing;
 using Mawrid.Domain.Requisitions;
@@ -45,6 +46,10 @@ public interface IAppDbContext
     DbSet<PurchaseOrder> PurchaseOrders { get; }
 
     DbSet<SupplierInvoice> SupplierInvoices { get; }
+
+    DbSet<WebhookSubscription> WebhookSubscriptions { get; }
+
+    DbSet<WebhookDelivery> WebhookDeliveries { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

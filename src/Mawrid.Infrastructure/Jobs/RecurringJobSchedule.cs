@@ -13,6 +13,7 @@ public static class RecurringJobSchedule
         ("rfqs-close-due", "*/5 * * * *", "Every 5 minutes: close RFQs whose deadline passed"),
         ("suppliers-document-expiry", "0 6 * * *", "Daily 06:00: warn about expiring supplier documents"),
         ("approvals-reminders", "0 8 * * 0-4", "Sunday to Thursday 08:00: remind approvers about steps waiting a day or more"),
+        ("webhooks-deliver", "* * * * *", "Every minute: send due webhook deliveries to the ERP"),
         ("clean-up", "30 3 * * *", "Daily 03:30: delete old outbox messages and expired idempotency records"),
     ];
 
@@ -26,6 +27,7 @@ public static class RecurringJobSchedule
         manager.AddOrUpdate<MawridJobs>("suppliers-document-expiry", j => j.WarnExpiringSupplierDocumentsAsync(CancellationToken.None),
             Cron("suppliers-document-expiry"), options);
         manager.AddOrUpdate<MawridJobs>("approvals-reminders", j => j.SendApprovalRemindersAsync(CancellationToken.None), Cron("approvals-reminders"), options);
+        manager.AddOrUpdate<MawridJobs>("webhooks-deliver", j => j.DeliverWebhooksAsync(CancellationToken.None), Cron("webhooks-deliver"), options);
         manager.AddOrUpdate<MawridJobs>("clean-up", j => j.CleanUpAsync(CancellationToken.None), Cron("clean-up"), options);
     }
 

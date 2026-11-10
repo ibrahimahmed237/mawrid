@@ -12,4 +12,5 @@ public static class Schemas
     public const string Sourcing = "sourcing";
     public const string Purchasing = "purchasing";
     public const string Payables = "payables";
+    public const string Integrations = "integrations";
 }

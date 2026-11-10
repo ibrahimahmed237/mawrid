@@ -32,6 +32,9 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
     /// <summary>Every email sent through the notification channel.</summary>
     public RecordingEmailSender Emails { get; } = new();
 
+    /// <summary>The fake ERP that receives webhooks.</summary>
+    public FakeWebhookReceiver Webhooks { get; } = new();
+
     /// <summary>Points at a test database (not master), created by the migrations on startup.</summary>
     public string ConnectionString => new SqlConnectionStringBuilder(_sqlServer.GetConnectionString())
     {
@@ -65,6 +68,7 @@ public sealed class MawridApiFactory : WebApplicationFactory<Program>, IAsyncLif
             services.AddSingleton<EventRecorder>();
             services.AddSingleton(Emails);
             services.AddSingleton<IEmailSender>(Emails);
+            services.AddHttpClient(nameof(Mawrid.Application.Integrations.IWebhookSender)).ConfigurePrimaryHttpMessageHandler(Webhooks.CreateHandler);
             services.AddSingleton<IClock>(Clock);
             services.AddTransient(typeof(INotificationHandler<>), typeof(RecordingEventHandler<>));
         });

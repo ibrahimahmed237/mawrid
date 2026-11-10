@@ -5,6 +5,7 @@ using Mawrid.Application.Common.Notifications;
 using Mawrid.Application.Common.Persistence;
 using Mawrid.Application.Common.Security;
 using Mawrid.Application.Files;
+using Mawrid.Application.Integrations;
 using Mawrid.Infrastructure.Files;
 using Mawrid.Infrastructure.Identity;
 using Mawrid.Infrastructure.Jobs;
@@ -14,11 +15,14 @@ using Mawrid.Infrastructure.Persistence;
 using Mawrid.Infrastructure.Persistence.Interceptors;
 using Mawrid.Infrastructure.Seeding;
 using Mawrid.Infrastructure.Time;
+using Mawrid.Infrastructure.Webhooks;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Mawrid.Infrastructure;
 
@@ -82,6 +86,13 @@ public static class DependencyInjection
         services.AddScoped<INotificationSender, NotificationSender>();
         services.AddScoped<INotificationChannel, EmailNotificationChannel>();
         services.AddSingleton<IEmailSender, LogEmailSender>();
+
+        // Webhooks: secrets are encrypted with Data Protection keys kept in the database, so every instance can read them.
+        services.AddDataProtection().SetApplicationName("Mawrid").PersistKeysToDbContext<AppDbContext>();
+        services.AddOptions<WebhookOptions>().BindConfiguration(WebhookOptions.SectionName);
+        services.AddSingleton<IWebhookSettings>(sp => sp.GetRequiredService<IOptions<WebhookOptions>>().Value);
+        services.AddSingleton<IWebhookSecrets, DataProtectionWebhookSecrets>();
+        services.AddHttpClient<IWebhookSender, HttpWebhookSender>();
 
         AddJobs(services, configuration, connectionString);
         return services;

@@ -1,6 +1,7 @@
 using Hangfire;
 using Mawrid.Application.Approvals;
 using Mawrid.Application.Common.Abstractions;
+using Mawrid.Application.Integrations;
 using Mawrid.Application.Sourcing;
 using Mawrid.Application.Suppliers;
 using Mawrid.Infrastructure.Persistence;
@@ -27,6 +28,9 @@ public sealed partial class MawridJobs(
 
     public Task<int> SendApprovalRemindersAsync(CancellationToken cancellationToken) =>
         runner.RunForEachOrganizationAsync(() => new SendApprovalRemindersCommand(), cancellationToken);
+
+    public Task<int> DeliverWebhooksAsync(CancellationToken cancellationToken) =>
+        runner.RunForEachOrganizationAsync(() => new DeliverWebhooksCommand(), cancellationToken);
 
     /// <summary>Deletes processed outbox messages after the retention period and expired idempotency records.</summary>
     public async Task<int> CleanUpAsync(CancellationToken cancellationToken)

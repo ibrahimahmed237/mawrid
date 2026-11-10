@@ -1,5 +1,6 @@
 using Mawrid.Infrastructure.Auditing;
 using Mawrid.Infrastructure.Outbox;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -50,4 +51,10 @@ internal sealed class IdempotencyRecordConfiguration : IEntityTypeConfiguration<
         builder.HasIndex(r => new { r.OrganizationId, r.Key }).IsUnique();
         builder.HasIndex(r => r.ExpiresAtUtc);
     }
+}
+
+internal sealed class DataProtectionKeyConfiguration : IEntityTypeConfiguration<DataProtectionKey>
+{
+    public void Configure(EntityTypeBuilder<DataProtectionKey> builder) =>
+        builder.ToTable("DataProtectionKeys", Schemas.Platform);
 }

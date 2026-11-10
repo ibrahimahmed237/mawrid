@@ -4,15 +4,17 @@ using Mawrid.Domain.Approvals;
 using Mawrid.Domain.Common;
 using Mawrid.Domain.Files;
 using Mawrid.Domain.Identity;
+using Mawrid.Domain.Integrations;
 using Mawrid.Domain.Payables;
 using Mawrid.Domain.Purchasing;
 using Mawrid.Domain.Requisitions;
 using Mawrid.Domain.Sourcing;
-using Mawrid.Infrastructure.Numbering;
 using Mawrid.Domain.Suppliers;
 using Mawrid.Infrastructure.Auditing;
 using Mawrid.Infrastructure.Identity;
+using Mawrid.Infrastructure.Numbering;
 using Mawrid.Infrastructure.Outbox;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +26,7 @@ namespace Mawrid.Infrastructure.Persistence;
 /// credential tables. Each module adds its entity configurations in this assembly.
 /// </summary>
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options, CurrentUserContext currentUser)
-    : IdentityUserContext<UserCredential, Guid>(options), IAppDbContext
+    : IdentityUserContext<UserCredential, Guid>(options), IAppDbContext, IDataProtectionKeyContext
 {
     /// <summary>Name of the query filter that hides other organizations' data (ADR-0003).</summary>
     public const string TenantFilter = Application.Common.Persistence.QueryFilters.Tenant;
@@ -58,6 +60,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
 
     public DbSet<SupplierInvoice> SupplierInvoices => Set<SupplierInvoice>();
+
+    public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
+
+    public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
+
+    /// <summary>ASP.NET Core Data Protection keys, shared by all app instances (they encrypt webhook secrets).</summary>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
 

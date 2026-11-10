@@ -123,7 +123,7 @@ public sealed class JobTests(MawridApiFactory factory)
     public void Tests_run_without_a_hangfire_server_and_every_job_has_a_schedule()
     {
         factory.Services.GetServices<IHostedService>().Should().NotContain(s => s.GetType().FullName!.StartsWith("Hangfire"));
-        RecurringJobSchedule.Jobs.Select(j => j.Id).Should().OnlyHaveUniqueItems().And.HaveCount(4);
+        RecurringJobSchedule.Jobs.Select(j => j.Id).Should().OnlyHaveUniqueItems().And.HaveCount(5);
         RecurringJobSchedule.Riyadh.BaseUtcOffset.Should().Be(TimeSpan.FromHours(3));
     }
 

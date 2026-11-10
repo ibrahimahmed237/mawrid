@@ -36,6 +36,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: "Server=sqlserver,1433;Database=Mawrid;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Mawrid_Dev_Passw0rd};TrustServerCertificate=True"
       # Azurite's well-known development account (public, local only).
+      Webhooks__AllowHttp: "true"
       FileStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
     ports:
       - "8080:8080"
@@ -44,6 +45,17 @@ services:
         condition: service_healthy
       azurite:
         condition: service_started
+
+  # A stand-in ERP that receives webhooks: create a subscription to http://mock-erp:8090/webhooks
+  # with the same secret (see docs/DEVELOPMENT.md).
+  mock-erp:
+    build:
+      context: .
+      dockerfile: tools/Mawrid.MockErp/Dockerfile
+    environment:
+      MOCKERP_SECRET: "whsec_local-development-secret-0123456789"
+    ports:
+      - "8090:8090"
 
 volumes:
   sqlserver-data:
