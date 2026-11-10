@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      microsoft:
+        patterns: ["Microsoft.*", "System.*"]
+      opentelemetry:
+        patterns: ["OpenTelemetry*"]
+    ignore:
+      # Newer majors are commercially licensed. See docs/adr/0005-dependency-licensing.md.
+      - dependency-name: MediatR
+        update-types: ["version-update:semver-major"]
+      - dependency-name: FluentAssertions
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
