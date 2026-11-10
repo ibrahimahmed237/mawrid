@@ -20,7 +20,7 @@ public class SupplierTests
         var supplier = NewSupplier();
         foreach (var type in Supplier.RequiredDocuments)
         {
-            supplier.AddDocument(type, Guid.NewGuid(), Today.AddYears(1), Now).IsSuccess.Should().BeTrue();
+            supplier.AddDocument(type, Guid.NewGuid(), Today.AddYears(1), Today, Now).IsSuccess.Should().BeTrue();
         }
 
         supplier.RequestBankAccount(ValidIban, "Al Rajhi Bank", "Al Ufuq Supplies", SupplierUser, Now).IsSuccess.Should().BeTrue();
@@ -31,7 +31,7 @@ public class SupplierTests
     {
         var supplier = ReadyForReview();
         supplier.SubmitForReview(Today).IsSuccess.Should().BeTrue();
-        supplier.Approve(Admin, Now).IsSuccess.Should().BeTrue();
+        supplier.Approve(Admin, Today, Now).IsSuccess.Should().BeTrue();
         return supplier;
     }
 
@@ -61,7 +61,7 @@ public class SupplierTests
 
         foreach (var type in Supplier.RequiredDocuments)
         {
-            supplier.AddDocument(type, Guid.NewGuid(), Today.AddMonths(6), Now);
+            supplier.AddDocument(type, Guid.NewGuid(), Today.AddMonths(6), Today, Now);
         }
 
         supplier.SubmitForReview(Today).Error.Should().Be(SupplierErrors.BankAccountMissing);
@@ -78,7 +78,7 @@ public class SupplierTests
     [Fact]
     public void A_document_that_already_expired_cannot_be_added()
     {
-        NewSupplier().AddDocument(SupplierDocumentType.CrCertificate, Guid.NewGuid(), Today, Now)
+        NewSupplier().AddDocument(SupplierDocumentType.CrCertificate, Guid.NewGuid(), Today, Today, Now)
             .Error.Should().Be(SupplierErrors.DocumentAlreadyExpired);
     }
 
@@ -88,7 +88,7 @@ public class SupplierTests
         var supplier = ReadyForReview();
         var later = Now.AddDays(1);
 
-        supplier.AddDocument(SupplierDocumentType.CrCertificate, Guid.NewGuid(), Today.AddDays(10), later);
+        supplier.AddDocument(SupplierDocumentType.CrCertificate, Guid.NewGuid(), Today.AddDays(10), Today, later);
 
         supplier.CurrentDocuments.Single(d => d.Type == SupplierDocumentType.CrCertificate).ExpiresOn.Should().Be(Today.AddDays(10));
         supplier.HasValidRequiredDocuments(Today.AddDays(11)).Should().BeFalse();
@@ -113,13 +113,13 @@ public class SupplierTests
         var supplier = NewSupplier();
         foreach (var type in Supplier.RequiredDocuments)
         {
-            supplier.AddDocument(type, Guid.NewGuid(), Today.AddYears(1), Now);
+            supplier.AddDocument(type, Guid.NewGuid(), Today.AddYears(1), Today, Now);
         }
 
         supplier.RequestBankAccount(ValidIban, "Al Rajhi Bank", "Al Ufuq", Admin, Now);
         supplier.SubmitForReview(Today);
 
-        supplier.Approve(Admin, Now).Error.Should().Be(SupplierErrors.FourEyesRequired);
+        supplier.Approve(Admin, Today, Now).Error.Should().Be(SupplierErrors.FourEyesRequired);
         supplier.Status.Should().Be(SupplierStatus.UnderReview);
     }
 
@@ -169,7 +169,7 @@ public class SupplierTests
     {
         var supplier = NewSupplier();
 
-        supplier.Approve(Admin, Now).Error!.Code.Should().Be("supplier.invalid_status_change");
+        supplier.Approve(Admin, Today, Now).Error!.Code.Should().Be("supplier.invalid_status_change");
         supplier.Block("reason").Error!.Code.Should().Be("supplier.invalid_status_change");
         supplier.Reject("reason").Error!.Code.Should().Be("supplier.invalid_status_change");
     }
@@ -181,7 +181,7 @@ public class SupplierTests
         supplier.SubmitForReview(Today);
         supplier.Reject("Missing ISO certificate").IsSuccess.Should().BeTrue();
 
-        supplier.AddDocument(SupplierDocumentType.Other, Guid.NewGuid(), Today.AddYears(1), Now).Error.Should().Be(SupplierErrors.SupplierRejected);
+        supplier.AddDocument(SupplierDocumentType.Other, Guid.NewGuid(), Today.AddYears(1), Today, Now).Error.Should().Be(SupplierErrors.SupplierRejected);
         supplier.RequestBankAccount(OtherIban, "SNB", "X Co", SupplierUser, Now).Error.Should().Be(SupplierErrors.SupplierRejected);
     }
 }

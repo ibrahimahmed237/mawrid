@@ -18,6 +18,7 @@ public sealed class UnreachableDatabaseTests : IClassFixture<UnreachableDatabase
             builder.UseEnvironment("Testing");
             builder.UseSetting("Jwt:SigningKey", Infrastructure.MawridApiFactory.TestSigningKey);
             builder.UseSetting("Outbox:Enabled", "false");
+            builder.UseSetting("FileStorage:ConnectionString", "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:1/devstoreaccount1;");
             builder.UseSetting(
                 "ConnectionStrings:Default",
                 "Server=127.0.0.1,1;Database=Mawrid;User Id=sa;Password=x;TrustServerCertificate=True;Connect Timeout=2");
