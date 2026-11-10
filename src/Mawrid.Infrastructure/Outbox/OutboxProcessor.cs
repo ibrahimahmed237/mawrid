@@ -53,20 +53,27 @@ public sealed partial class OutboxProcessor(
         var lockedUntil = now + LockDuration;
         var batchSize = options.Value.BatchSize;
 
-        // One atomic statement: pick due messages, lock them, and return them.
-        return await db.OutboxMessages
+        // One atomic statement: pick the oldest due messages, lock them, and return them.
+        var claimed = await db.OutboxMessages
             .FromSql($"""
-                UPDATE TOP ({batchSize}) m
-                SET m.LockedUntilUtc = {lockedUntil}
+                WITH batch AS (
+                    SELECT TOP ({batchSize}) *
+                    FROM platform.OutboxMessages WITH (ROWLOCK, READPAST, UPDLOCK)
+                    WHERE ProcessedOnUtc IS NULL
+                      AND DeadLetteredOnUtc IS NULL
+                      AND NextAttemptAtUtc <= {now}
+                      AND (LockedUntilUtc IS NULL OR LockedUntilUtc < {now})
+                    ORDER BY OccurredOnUtc
+                )
+                UPDATE batch
+                SET LockedUntilUtc = {lockedUntil}
                 OUTPUT inserted.*
-                FROM platform.OutboxMessages m WITH (ROWLOCK, READPAST, UPDLOCK)
-                WHERE m.ProcessedOnUtc IS NULL
-                  AND m.DeadLetteredOnUtc IS NULL
-                  AND m.NextAttemptAtUtc <= {now}
-                  AND (m.LockedUntilUtc IS NULL OR m.LockedUntilUtc < {now})
                 """)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+
+        // OUTPUT does not keep the CTE order, so sort again: events are delivered oldest first.
+        return claimed.OrderBy(m => m.OccurredOnUtc).ThenBy(m => m.Id).ToList();
     }
 
     private async Task DeliverAsync(OutboxMessage message, CancellationToken cancellationToken)

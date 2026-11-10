@@ -73,14 +73,14 @@ internal sealed class DeactivateUserCommandHandler(IAppDbContext db, ICurrentUse
         }
 
         user.Deactivate();
-        await db.SaveChangesAsync(cancellationToken);
 
-        // End all sessions now. Access tokens already issued stay valid until they expire (at most 15 minutes).
+        // End all sessions in the same transaction. Access tokens already issued stay valid
+        // until they expire (at most 15 minutes).
         var now = clock.UtcNow;
-        await db.RefreshTokens
-            .Where(t => t.UserId == user.Id && t.RevokedAtUtc == null)
-            .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAtUtc, now), cancellationToken);
+        var sessions = await db.RefreshTokens.Where(t => t.UserId == user.Id && t.RevokedAtUtc == null).ToListAsync(cancellationToken);
+        sessions.ForEach(t => t.Revoke(now));
 
+        await db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 }
