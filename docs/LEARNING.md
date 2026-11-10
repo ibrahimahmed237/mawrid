@@ -196,3 +196,41 @@ sequenceDiagram
 3. Difference between optimistic and pessimistic concurrency? When does each fit?
 4. How do you generate gap-free or unique sequential numbers in SQL Server?
 5. How do two modules stay consistent without calling each other's database tables?
+
+### M5 — Sourcing (RFQs and sealed quotations)
+
+**What we built:** RFQs sent to invited suppliers, sealed quotations that the buyer cannot see before the deadline, a price comparison, and an award that creates one draft purchase order per winning supplier.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft: buyer creates (from approved PR lines or by hand)
+  Draft --> Published: publish (deadline ≥ minimum window, enough suppliers)
+  Published --> Published: amend (later deadline, suppliers re-confirm)
+  Published --> Closed: deadline passes
+  Closed --> Awarded: award lines → draft POs
+  Draft --> Cancelled: cancel (reason)
+  Published --> Cancelled: cancel (reason)
+```
+
+| .NET idea | Where | NestJS equivalent |
+|---|---|---|
+| Injected clock (`IClock`) + `TestClock` | Deadlines, "sealed" checks | Injecting a `Clock` provider and faking it with `jest.useFakeTimers()` |
+| Owned entities with their own `Id` key | `RfqInvitation`, `RfqAward`, `QuotationLine` | Child tables with a UUID primary key |
+| Unique index on owned rows | One invitation per (RFQ, supplier) | `@@unique([rfqId, supplierId])` in Prisma |
+| One `SaveChangesAsync` across modules | Award saves RFQ, POs and PRs together | One `prisma.$transaction([...])` |
+
+**Decisions worth explaining**
+
+- **The deadline is checked by the clock, not by the status column.** An RFQ stays `Published` until something closes it. Quotation submit and the buyer's comparison both ask `IsOpen(now)` / `IsSealed(now)`, so a late quotation is refused even if the close job has not run yet.
+- **Sealed means sealed.** The buyer API returns no prices until the deadline passes. The first time a buyer opens the quotations, we record who and when.
+- **Amend forces re-confirmation.** Changing quantities raises the RFQ revision. A quotation for an older revision is not eligible until the supplier submits again.
+- **Award needs a reason for a non-lowest price.** The handler works out the lowest eligible price per line. Picking another supplier without a 10-character justification fails with `422`.
+- **Owned items need their own key.** We first keyed `RfqInvitation` by (RFQ id, supplier id). EF Core saw a new invitation with a known key, treated it as an existing row and sent an `UPDATE` that changed 0 rows, which surfaced as a `409`. A separate `Guid Id` fixed it. Lesson: a client-set key on a child row means "this row already exists" to EF.
+
+**Likely interview questions**
+
+1. How do you test code that depends on the current time?
+2. How would you hide bids from buyers until a deadline, and prove it?
+3. How do you keep several aggregates consistent in one request?
+4. Why can EF Core send an `UPDATE` for a row you meant to insert?
+5. What audit trail does a public-sector-style tender need?
