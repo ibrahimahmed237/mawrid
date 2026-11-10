@@ -14,6 +14,7 @@ public static class ResultHttpExtensions
         ErrorType.NotFound => StatusCodes.Status404NotFound,
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.RuleViolation => StatusCodes.Status422UnprocessableEntity,
+        ErrorType.Precondition => StatusCodes.Status412PreconditionFailed,
         _ => StatusCodes.Status500InternalServerError,
     };
 

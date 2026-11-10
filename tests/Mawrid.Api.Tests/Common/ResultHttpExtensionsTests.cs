@@ -12,6 +12,7 @@ public class ResultHttpExtensionsTests
     [InlineData(ErrorType.NotFound, 404)]
     [InlineData(ErrorType.Conflict, 409)]
     [InlineData(ErrorType.RuleViolation, 422)]
+    [InlineData(ErrorType.Precondition, 412)]
     public void Each_error_type_maps_to_its_status(ErrorType type, int expected)
     {
         type.ToStatusCode().Should().Be(expected);

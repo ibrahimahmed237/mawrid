@@ -33,4 +33,6 @@ public sealed record Error
     public static Error Conflict(string code, string message) => new(code, message, ErrorType.Conflict);
 
     public static Error RuleViolation(string code, string message) => new(code, message, ErrorType.RuleViolation);
+
+    public static Error Precondition(string code, string message) => new(code, message, ErrorType.Precondition);
 }

@@ -7,6 +7,9 @@ public static class IdentityErrors
     public static readonly Error OrganizationNameInvalid =
         Error.Validation("organization.name_invalid", "The organization name must be 2 to 200 characters.");
 
+    public static readonly Error SettingsInvalid =
+        Error.Validation("organization.settings_invalid", "One or more procurement settings are out of range.");
+
     public static readonly Error CostCenterCodeInvalid =
         Error.Validation("cost_center.code_invalid", "The code must be 2 to 20 characters: letters, digits and '-'.");
 

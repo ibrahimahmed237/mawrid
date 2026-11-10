@@ -20,4 +20,7 @@ public enum ErrorType
 
     /// <summary>A business rule says no, such as "the RFQ deadline has passed". HTTP 422.</summary>
     RuleViolation,
+
+    /// <summary>The client's copy is out of date (If-Match did not match). HTTP 412.</summary>
+    Precondition,
 }

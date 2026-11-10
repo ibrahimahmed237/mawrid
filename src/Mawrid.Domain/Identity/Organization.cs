@@ -7,14 +7,34 @@ public sealed class Organization : AggregateRoot<Guid>
 {
     public const int NameMaxLength = 200;
 
-    private Organization(Guid id, string name) : base(id) => Name = name;
+    private Organization(Guid id, string name) : base(id)
+    {
+        Name = name;
+        Settings = ProcurementSettings.Default;
+    }
 
     private Organization()
     {
         Name = null!;
+        Settings = null!;
     }
 
     public string Name { get; private set; }
+
+    /// <summary>Limits and tolerances the procurement rules use. Admins can change them.</summary>
+    public ProcurementSettings Settings { get; private set; }
+
+    public Result UpdateSettings(ProcurementSettings settings)
+    {
+        var check = settings.Validate();
+        if (check.IsFailure)
+        {
+            return check;
+        }
+
+        Settings = settings;
+        return Result.Success();
+    }
 
     public static Result<Organization> Create(string name)
     {
