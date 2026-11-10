@@ -36,3 +36,18 @@ internal sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEn
         builder.HasIndex(a => new { a.OrganizationId, a.OccurredOnUtc });
     }
 }
+
+internal sealed class IdempotencyRecordConfiguration : IEntityTypeConfiguration<Idempotency.IdempotencyRecord>
+{
+    public void Configure(EntityTypeBuilder<Idempotency.IdempotencyRecord> builder)
+    {
+        builder.ToTable("IdempotencyKeys", Schemas.Platform);
+        builder.Property(r => r.Id).ValueGeneratedNever();
+        builder.Property(r => r.Key).HasMaxLength(100).IsRequired();
+        builder.Property(r => r.RequestHash).HasMaxLength(64).IsRequired();
+        builder.Property(r => r.ResponseContentType).HasMaxLength(100);
+        builder.Property(r => r.ResponseLocation).HasMaxLength(500);
+        builder.HasIndex(r => new { r.OrganizationId, r.Key }).IsUnique();
+        builder.HasIndex(r => r.ExpiresAtUtc);
+    }
+}

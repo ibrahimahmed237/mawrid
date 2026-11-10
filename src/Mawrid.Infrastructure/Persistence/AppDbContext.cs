@@ -1,7 +1,9 @@
 using System.Linq.Expressions;
 using Mawrid.Application.Common.Persistence;
 using Mawrid.Domain.Common;
+using Mawrid.Domain.Files;
 using Mawrid.Domain.Identity;
+using Mawrid.Domain.Suppliers;
 using Mawrid.Infrastructure.Auditing;
 using Mawrid.Infrastructure.Identity;
 using Mawrid.Infrastructure.Outbox;
@@ -29,9 +31,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    public DbSet<StoredFile> Files => Set<StoredFile>();
+
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
+    public DbSet<Idempotency.IdempotencyRecord> IdempotencyRecords => Set<Idempotency.IdempotencyRecord>();
 
     /// <summary>Read by the tenant query filter on every query.</summary>
     public Guid? CurrentOrganizationId => currentUser.OrganizationId;

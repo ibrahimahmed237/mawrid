@@ -7,6 +7,7 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Azure.Storage.Blobs" />
   </ItemGroup>
   <ItemGroup>
     <!-- Identity, options validation and hosting come from the ASP.NET Core shared framework. -->

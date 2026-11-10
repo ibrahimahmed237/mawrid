@@ -7,4 +7,10 @@ namespace Mawrid.Application.Common.Abstractions;
 public interface IClock
 {
     DateTimeOffset UtcNow { get; }
+
+    /// <summary>
+    /// Today's business date in Saudi Arabia (Asia/Riyadh). Use it for dates people
+    /// think in, such as document expiry. Store and compare times in UTC.
+    /// </summary>
+    DateOnly Today { get; }
 }

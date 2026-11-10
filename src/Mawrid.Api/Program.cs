@@ -1,6 +1,7 @@
 using Mawrid.Api.Common.Correlation;
 using Mawrid.Api.Common.Errors;
 using Mawrid.Api.Common.Health;
+using Mawrid.Api.Common.Idempotency;
 using Mawrid.Api.Common.Observability;
 using Mawrid.Api.Common.Security;
 using Mawrid.Application;
@@ -48,6 +49,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseMiddleware<CurrentUserMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapApiHealthChecks();
 app.MapControllers();

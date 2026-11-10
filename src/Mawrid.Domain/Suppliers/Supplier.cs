@@ -106,14 +106,15 @@ public sealed class Supplier : AggregateRoot<Guid>, ITenantOwned
     /// <summary>Can the supplier be invited to RFQs and win awards today?</summary>
     public bool IsAwardable(DateOnly today) => Status == SupplierStatus.Approved && HasValidRequiredDocuments(today);
 
-    public Result AddDocument(SupplierDocumentType type, Guid fileId, DateOnly expiresOn, DateTimeOffset now)
+    /// <param name="today">The business date (Asia/Riyadh). A document must expire after it.</param>
+    public Result AddDocument(SupplierDocumentType type, Guid fileId, DateOnly expiresOn, DateOnly today, DateTimeOffset now)
     {
         if (Status == SupplierStatus.Rejected)
         {
             return SupplierErrors.SupplierRejected;
         }
 
-        if (expiresOn <= DateOnly.FromDateTime(now.UtcDateTime))
+        if (expiresOn <= today)
         {
             return SupplierErrors.DocumentAlreadyExpired;
         }
@@ -209,14 +210,14 @@ public sealed class Supplier : AggregateRoot<Guid>, ITenantOwned
     }
 
     /// <summary>Approves the supplier and verifies its first bank account (the approver is the second person).</summary>
-    public Result Approve(Guid approvedBy, DateTimeOffset now)
+    public Result Approve(Guid approvedBy, DateOnly today, DateTimeOffset now)
     {
         if (Status != SupplierStatus.UnderReview)
         {
             return SupplierErrors.InvalidStatusChange(Status, SupplierStatus.Approved);
         }
 
-        if (!HasValidRequiredDocuments(DateOnly.FromDateTime(now.UtcDateTime)))
+        if (!HasValidRequiredDocuments(today))
         {
             return SupplierErrors.RequiredDocumentsMissing;
         }

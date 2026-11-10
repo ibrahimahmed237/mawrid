@@ -14,6 +14,9 @@ public static class Policies
 
     public const string SupplierUser = nameof(SupplierUser);
 
+    /// <summary>Procurement staff: Buyer or Admin.</summary>
+    public const string Procurement = nameof(Procurement);
+
     public static void Configure(AuthorizationOptions options)
     {
         // Secure by default: an endpoint without [Authorize] still needs a valid token.
@@ -23,6 +26,9 @@ public static class Policies
         options.AddPolicy(InternalUser, policy => policy
             .RequireAuthenticatedUser()
             .RequireAssertion(context => !context.User.HasClaim(MawridClaims.Role, nameof(Role.Supplier))));
-        options.AddPolicy(SupplierUser, policy => policy.RequireRole(nameof(Role.Supplier)));
+        options.AddPolicy(SupplierUser, policy => policy
+            .RequireRole(nameof(Role.Supplier))
+            .RequireClaim(MawridClaims.Supplier));
+        options.AddPolicy(Procurement, policy => policy.RequireRole(nameof(Role.Buyer), nameof(Role.Admin)));
     }
 }

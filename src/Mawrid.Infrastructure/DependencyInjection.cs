@@ -1,6 +1,8 @@
 using Mawrid.Application.Common.Abstractions;
 using Mawrid.Application.Common.Persistence;
 using Mawrid.Application.Common.Security;
+using Mawrid.Application.Files;
+using Mawrid.Infrastructure.Files;
 using Mawrid.Infrastructure.Identity;
 using Mawrid.Infrastructure.Outbox;
 using Mawrid.Infrastructure.Persistence;
@@ -62,6 +64,12 @@ public static class DependencyInjection
         services.AddHostedService<OutboxWorker>();
 
         services.AddOptions<SeedOptions>().BindConfiguration(SeedOptions.SectionName);
+
+        services.AddOptions<FileStorageOptions>().BindConfiguration(FileStorageOptions.SectionName).ValidateDataAnnotations().ValidateOnStart();
+        services.AddSingleton<IFileStorage, AzureBlobFileStorage>();
+        services.AddSingleton<IMalwareScanner, EicarTestScanner>();
+
+        services.AddSingleton<Idempotency.IdempotencyStore>();
 
         return services;
     }

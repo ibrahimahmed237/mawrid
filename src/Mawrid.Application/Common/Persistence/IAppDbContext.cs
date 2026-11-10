@@ -1,4 +1,6 @@
+using Mawrid.Domain.Files;
 using Mawrid.Domain.Identity;
+using Mawrid.Domain.Suppliers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mawrid.Application.Common.Persistence;
@@ -16,6 +18,10 @@ public interface IAppDbContext
     DbSet<User> Users { get; }
 
     DbSet<RefreshToken> RefreshTokens { get; }
+
+    DbSet<StoredFile> Files { get; }
+
+    DbSet<Supplier> Suppliers { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

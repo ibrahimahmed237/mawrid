@@ -37,6 +37,9 @@ public static class IdentityErrors
     public static readonly Error SupplierRoleRules =
         Error.Validation("user.supplier_role_rules", "Supplier users must have a supplier and only the Supplier role.");
 
+    public static readonly Error SupplierNotFound =
+        Error.NotFound("user.supplier_not_found", "The supplier for this supplier user was not found.");
+
     public static readonly Error UserNotFound =
         Error.NotFound("user.not_found", "The user was not found.");
 

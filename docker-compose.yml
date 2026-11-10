@@ -23,7 +23,8 @@ services:
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
-    command: azurite-blob --blobHost 0.0.0.0 --loose
+    # --skipApiVersionCheck: the Azure SDK can be newer than this Azurite image.
+    command: azurite-blob --blobHost 0.0.0.0 --loose --skipApiVersionCheck
     ports:
       - "10000:10000"
     volumes:
@@ -34,6 +35,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: "Server=sqlserver,1433;Database=Mawrid;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Mawrid_Dev_Passw0rd};TrustServerCertificate=True"
+      # Azurite's well-known development account (public, local only).
+      FileStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
     ports:
       - "8080:8080"
     depends_on:

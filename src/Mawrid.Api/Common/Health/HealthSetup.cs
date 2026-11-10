@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Mawrid.Infrastructure.Files;
 using Mawrid.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -19,7 +20,8 @@ public static class HealthSetup
     public static IServiceCollection AddApiHealthChecks(this IServiceCollection services)
     {
         services.AddHealthChecks()
-            .AddDbContextCheck<AppDbContext>("sql-server", tags: [ReadyTag]);
+            .AddDbContextCheck<AppDbContext>("sql-server", tags: [ReadyTag])
+            .AddCheck<BlobStorageHealthCheck>("blob-storage", tags: [ReadyTag]);
         return services;
     }
 

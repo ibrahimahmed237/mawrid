@@ -21,6 +21,10 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(typeof(AssemblyReference).Assembly, includeInternalTypes: true);
 
+        // Interfaces that one module publishes for other modules.
+        services.AddScoped<Contracts.Files.IFileReferences, Files.FileReferences>();
+        services.AddScoped<Contracts.Suppliers.ISupplierDirectory, Suppliers.SupplierDirectory>();
+
         return services;
     }
 }

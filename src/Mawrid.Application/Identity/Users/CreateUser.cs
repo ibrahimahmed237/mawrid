@@ -2,6 +2,7 @@ using FluentValidation;
 using Mawrid.Application.Common.Messaging;
 using Mawrid.Application.Common.Persistence;
 using Mawrid.Application.Common.Security;
+using Mawrid.Application.Contracts.Suppliers;
 using Mawrid.Domain.Common;
 using Mawrid.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +31,8 @@ internal sealed class CreateUserCommandValidator : AbstractValidator<CreateUserC
 internal sealed class CreateUserCommandHandler(
     IAppDbContext db,
     IIdentityService identity,
-    ICurrentUser currentUser) : ICommandHandler<CreateUserCommand, Guid>
+    ICurrentUser currentUser,
+    ISupplierDirectory suppliers) : ICommandHandler<CreateUserCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateUserCommand command, CancellationToken cancellationToken)
     {
@@ -56,6 +58,12 @@ internal sealed class CreateUserCommandHandler(
         if (!await UserRules.CostCentersExistAsync(db.CostCenters, roles, cancellationToken))
         {
             return IdentityErrors.CostCenterNotFound;
+        }
+
+        // Supplier users are invited for a supplier of this organization (asked through the Suppliers module).
+        if (user.SupplierId is { } supplierId && await suppliers.FindAsync(supplierId, cancellationToken) is null)
+        {
+            return IdentityErrors.SupplierNotFound;
         }
 
         // Identity's UserManager saves through the same scoped DbContext, so the business user
