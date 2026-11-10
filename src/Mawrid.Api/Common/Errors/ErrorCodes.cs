@@ -12,4 +12,5 @@ public static class ErrorCodes
     public const string Http = "request.http_error";
     public const string ConcurrencyConflict = "concurrency.conflict";
     public const string RateLimited = "request.rate_limited";
+    public const string Duplicate = "request.duplicate";
 }

@@ -11,6 +11,14 @@ namespace Mawrid.Api.Tests.Common;
 public class ErrorResponsesTests(MawridApiFactory factory)
 {
     [Fact]
+    public async Task Two_requests_that_race_past_the_duplicate_check_get_409_not_500()
+    {
+        var response = await factory.CreateClient().GetAsync("/_test/errors/duplicate");
+
+        await response.ShouldBeProblemAsync(HttpStatusCode.Conflict, "request.duplicate");
+    }
+
+    [Fact]
     public async Task Anonymous_request_to_an_unknown_route_gets_401_without_revealing_routes()
     {
         var response = await factory.CreateClient().GetAsync("/does-not-exist");

@@ -1,4 +1,5 @@
 using Mawrid.Application.Common.Exceptions;
+using Mawrid.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,17 @@ public sealed partial class GlobalExceptionHandler(
                 Detail = "The record was changed by someone else. Reload it and try again.",
             };
             problem.Extensions["code"] = ErrorCodes.ConcurrencyConflict;
+        }
+        else if (exception is DbUpdateException update && DbExceptions.IsUniqueViolation(update))
+        {
+            // The duplicate check passed for two requests at once; the unique index stopped the second.
+            problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = "A record with the same unique values already exists.",
+            };
+            problem.Extensions["code"] = ErrorCodes.Duplicate;
         }
         else
         {

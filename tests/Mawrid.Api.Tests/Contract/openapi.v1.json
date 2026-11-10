@@ -5508,42 +5508,6 @@
           }
         }
       }
-    },
-    "/_test/errors/unhandled": {
-      "get": {
-        "tags": [
-          "TestErrors"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/_test/errors/validation": {
-      "get": {
-        "tags": [
-          "TestErrors"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/_test/errors/conflict": {
-      "get": {
-        "tags": [
-          "TestErrors"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -9552,9 +9516,6 @@
     },
     {
       "name": "ApprovalDelegations"
-    },
-    {
-      "name": "TestErrors"
     }
   ]
 }
