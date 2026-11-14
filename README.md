@@ -4,16 +4,7 @@ A buyer-side procure-to-pay platform for companies in Saudi Arabia. It covers pu
 
 > Status: all milestones of the [delivery plan](docs/DESIGN.md#13-delivery-plan) (M1–M9) are built and tested. There is no frontend yet; the API is ready for one.
 
-```mermaid
-flowchart LR
-  PR[Requisition] -->|approval matrix| R{Route}
-  R -->|small| PO[Purchase order]
-  R -->|RFQ: sealed quotes, award per line| PO
-  PO -->|approval, send, supplier confirms| GR[Goods receipt]
-  GR --> INV[Supplier invoice: UBL XML, or PDF + AI draft]
-  INV -->|QR + three-way match| OK[Released for payment]
-  OK -->|signed webhook| ERP[ERP]
-```
+![One purchase through Mawrid: 8 of 10 units arrive, the supplier bills 10, the three-way match puts the invoice on hold, and releases it by itself when the rest arrives](docs/media/purchase-flow.svg)
 
 ## Demo
 
@@ -41,6 +32,19 @@ https://github.com/user-attachments/assets/f48cd85c-2af3-4452-9f7f-130bf768ca17
 - **AI help:** PDF invoices are read into a draft with a confidence per value; a person always confirms.
 - **Integration:** HMAC-signed ERP webhooks with retries and replay; email and SignalR notifications; Hangfire jobs.
 - **Production basics:** multi-tenant data, audit trail, outbox, idempotency keys, ETags, rate limits, security headers, health checks, OpenTelemetry.
+
+Every route a purchase can take:
+
+```mermaid
+flowchart LR
+  PR[Requisition] -->|approval matrix| R{Route}
+  R -->|small| PO[Purchase order]
+  R -->|RFQ: sealed quotes, award per line| PO
+  PO -->|approval, send, supplier confirms| GR[Goods receipt]
+  GR --> INV[Supplier invoice: UBL XML, or PDF + AI draft]
+  INV -->|QR + three-way match| OK[Released for payment]
+  OK -->|signed webhook| ERP[ERP]
+```
 
 ## Quick start
 

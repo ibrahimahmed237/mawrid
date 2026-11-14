@@ -1,0 +1,304 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" role="img" aria-labelledby="t d">
+  <title id="t">One purchase through Mawrid</title>
+  <desc id="d">A requisition is approved by the approval matrix and becomes a purchase order for 10 units from a sealed RFQ. Only 8 units arrive, but the supplier invoices all 10. The three-way match compares order, receipt and invoice and puts the invoice on hold. When the last 2 units are received, the match runs again by itself, the invoice is matched and released, and the ERP is told with a signed webhook.</desc>
+  <style>
+    :root {
+      --bg: #F6F7F9; --card: #FFFFFF; --line: #D0D7DE; --text: #1F2328; --muted: #59636E;
+      --accent: #B58A1B; --accent-soft: #F6ECCB; --ok: #1A7F37; --ok-soft: #DAFBE1; --bad: #CF222E; --bad-soft: #FFEBE9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #22272E; --card: #2D333B; --line: #444C56; --text: #CDD9E5; --muted: #909DAB;
+        --accent: #E8CF8F; --accent-soft: #4A4230; --ok: #6BC46D; --ok-soft: #264D2E; --bad: #F47067; --bad-soft: #4D2A2A;
+      }
+    }
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .frame { fill: var(--bg); stroke: var(--line); }
+    .heading { fill: var(--muted); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .node { fill: var(--card); stroke: var(--line); stroke-width: 2; }
+    .title { fill: var(--text); font-size: 16px; font-weight: 600; text-anchor: middle; }
+    .sub { fill: var(--muted); font-size: 12px; text-anchor: middle; }
+    .edge { stroke: var(--line); stroke-width: 2; fill: none; }
+    .edge.dashed { stroke-dasharray: 5 6; }
+    .label { fill: var(--muted); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .dot { fill: var(--accent); opacity: 0; }
+    .badge { opacity: 0; }
+    .badge text { font-size: 11px; font-weight: 600; text-anchor: middle; }
+    .badge.ok rect { fill: var(--ok-soft); } .badge.ok text { fill: var(--ok); }
+    .badge.bad rect { fill: var(--bad-soft); } .badge.bad text { fill: var(--bad); }
+    .cross { opacity: 0; }
+    .cross circle { fill: var(--bad-soft); stroke: var(--bad); stroke-width: 2; }
+    .cross path { stroke: var(--bad); stroke-width: 2.5; stroke-linecap: round; }
+    .caption { fill: var(--text); font-size: 16px; text-anchor: middle; opacity: 0; }
+    .caption tspan { fill: var(--accent); font-weight: 700; }
+
+.dot, .node, .badge, .cross, .caption { animation-duration: 16s; animation-iteration-count: infinite; }
+.dot { animation-timing-function: linear; }
+.m0 { animation-name: m0; }
+@keyframes m0 {
+  0% { transform: translate(150px, 140px); opacity: 0; }
+  8.00% { transform: translate(150px, 140px); opacity: 0; }
+  8.12% { transform: translate(150px, 140px); opacity: 1; }
+  13.75% { transform: translate(240px, 140px); opacity: 1; }
+  13.88% { transform: translate(240px, 140px); opacity: 0; }
+  100% { transform: translate(240px, 140px); opacity: 0; }
+}
+.m1 { animation-name: m1; }
+@keyframes m1 {
+  0% { transform: translate(400px, 140px); opacity: 0; }
+  26.75% { transform: translate(400px, 140px); opacity: 0; }
+  26.88% { transform: translate(400px, 140px); opacity: 1; }
+  31.87% { transform: translate(490px, 140px); opacity: 1; }
+  32.00% { transform: translate(490px, 140px); opacity: 0; }
+  100% { transform: translate(490px, 140px); opacity: 0; }
+}
+.m2 { animation-name: m2; }
+@keyframes m2 {
+  0% { transform: translate(320px, 170px); opacity: 0; }
+  49.88% { transform: translate(320px, 170px); opacity: 0; }
+  50.00% { transform: translate(320px, 170px); opacity: 1; }
+  55.00% { transform: translate(350px, 250px); opacity: 1; }
+  55.12% { transform: translate(350px, 250px); opacity: 0; }
+  100% { transform: translate(350px, 250px); opacity: 0; }
+}
+.m3 { animation-name: m3; }
+@keyframes m3 {
+  0% { transform: translate(570px, 170px); opacity: 0; }
+  49.88% { transform: translate(570px, 170px); opacity: 0; }
+  50.00% { transform: translate(570px, 170px); opacity: 1; }
+  55.00% { transform: translate(430px, 250px); opacity: 1; }
+  55.12% { transform: translate(430px, 250px); opacity: 0; }
+  100% { transform: translate(430px, 250px); opacity: 0; }
+}
+.m4 { animation-name: m4; }
+@keyframes m4 {
+  0% { transform: translate(150px, 280px); opacity: 0; }
+  49.88% { transform: translate(150px, 280px); opacity: 0; }
+  50.00% { transform: translate(150px, 280px); opacity: 1; }
+  55.00% { transform: translate(270px, 280px); opacity: 1; }
+  55.12% { transform: translate(270px, 280px); opacity: 0; }
+  100% { transform: translate(270px, 280px); opacity: 0; }
+}
+.m5 { animation-name: m5; }
+@keyframes m5 {
+  0% { transform: translate(570px, 170px); opacity: 0; }
+  76.12% { transform: translate(570px, 170px); opacity: 0; }
+  76.25% { transform: translate(570px, 170px); opacity: 1; }
+  80.62% { transform: translate(430px, 250px); opacity: 1; }
+  80.75% { transform: translate(430px, 250px); opacity: 0; }
+  100% { transform: translate(430px, 250px); opacity: 0; }
+}
+.m6 { animation-name: m6; }
+@keyframes m6 {
+  0% { transform: translate(490px, 280px); opacity: 0; }
+  83.00% { transform: translate(490px, 280px); opacity: 0; }
+  83.12% { transform: translate(490px, 280px); opacity: 1; }
+  88.12% { transform: translate(600px, 280px); opacity: 1; }
+  88.25% { transform: translate(600px, 280px); opacity: 0; }
+  100% { transform: translate(600px, 280px); opacity: 0; }
+}
+.n-req { animation-name: n-req; }
+@keyframes n-req {
+  0%, 0.31% { stroke: var(--line); }
+  1.88%, 97.50% { stroke: var(--accent); }
+  100% { stroke: var(--line); }
+}
+.n-po { animation-name: n-po; }
+@keyframes n-po {
+  0%, 12.19% { stroke: var(--line); }
+  13.75%, 97.50% { stroke: var(--accent); }
+  100% { stroke: var(--line); }
+}
+.n-gr { animation-name: n-gr; }
+@keyframes n-gr {
+  0%, 30.31% { stroke: var(--line); }
+  31.87%, 97.50% { stroke: var(--accent); }
+  100% { stroke: var(--line); }
+}
+.n-inv { animation-name: n-inv; }
+@keyframes n-inv {
+  0%, 36.56% { stroke: var(--line); }
+  38.12%, 97.50% { stroke: var(--accent); }
+  100% { stroke: var(--line); }
+}
+.n-match { animation-name: n-match; }
+@keyframes n-match {
+  0%, 53.44% { stroke: var(--line); }
+  55.00%, 97.50% { stroke: var(--accent); }
+  100% { stroke: var(--line); }
+}
+.n-erp { animation-name: n-erp; }
+@keyframes n-erp {
+  0%, 86.56% { stroke: var(--line); }
+  88.12%, 97.50% { stroke: var(--accent); }
+  100% { stroke: var(--line); }
+}
+.b0 { animation-name: b0; }
+@keyframes b0 {
+  0%, 4.38% { opacity: 0; }
+  5.94%, 97.50% { opacity: 1; }
+  99.06%, 100% { opacity: 0; }
+}
+.b1 { animation-name: b1; }
+@keyframes b1 {
+  0%, 15.00% { opacity: 0; }
+  16.56%, 97.50% { opacity: 1; }
+  99.06%, 100% { opacity: 0; }
+}
+.b2 { animation-name: b2; }
+@keyframes b2 {
+  0%, 33.12% { opacity: 0; }
+  34.69%, 74.38% { opacity: 1; }
+  75.94%, 100% { opacity: 0; }
+}
+.b3 { animation-name: b3; }
+@keyframes b3 {
+  0%, 39.38% { opacity: 0; }
+  40.94%, 97.50% { opacity: 1; }
+  99.06%, 100% { opacity: 0; }
+}
+.b4 { animation-name: b4; }
+@keyframes b4 {
+  0%, 56.88% { opacity: 0; }
+  58.44%, 80.62% { opacity: 1; }
+  82.19%, 100% { opacity: 0; }
+}
+.b5 { animation-name: b5; }
+@keyframes b5 {
+  0%, 75.00% { opacity: 0; }
+  76.56%, 97.50% { opacity: 1; }
+  99.06%, 100% { opacity: 0; }
+}
+.b6 { animation-name: b6; }
+@keyframes b6 {
+  0%, 81.25% { opacity: 0; }
+  82.81%, 97.50% { opacity: 1; }
+  99.06%, 100% { opacity: 0; }
+}
+.b7 { animation-name: b7; }
+@keyframes b7 {
+  0%, 89.38% { opacity: 0; }
+  90.94%, 97.50% { opacity: 1; }
+  99.06%, 100% { opacity: 0; }
+}
+.c0 { animation-name: c0; }
+@keyframes c0 {
+  0%, 0.00% { opacity: 0; }
+  1.88%, 23.12% { opacity: 1; }
+  25.00%, 100% { opacity: 0; }
+}
+.c1 { animation-name: c1; }
+@keyframes c1 {
+  0%, 25.00% { opacity: 0; }
+  26.88%, 46.88% { opacity: 1; }
+  48.75%, 100% { opacity: 0; }
+}
+.c2 { animation-name: c2; }
+@keyframes c2 {
+  0%, 48.75% { opacity: 0; }
+  50.62%, 70.62% { opacity: 1; }
+  72.50%, 100% { opacity: 0; }
+}
+.c3 { animation-name: c3; }
+@keyframes c3 {
+  0%, 72.50% { opacity: 0; }
+  74.38%, 95.62% { opacity: 1; }
+  97.50%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dot, .node, .badge, .cross, .caption { animation: none; }
+  .badge, .cross, .c3 { opacity: 1; }
+  .node { stroke: var(--accent); }
+}
+  </style>
+
+  <rect class="frame" x="1" y="1" width="958" height="378" rx="16"/>
+  <text class="heading" x="40" y="36">One purchase through Mawrid</text>
+  <g transform="translate(105 0)">
+  <path class="edge" d="M150 140 H240"/>
+  <path class="edge" d="M400 140 H490"/>
+  <path class="edge dashed" d="M320 170 L350 250"/>
+  <path class="edge dashed" d="M570 170 L430 250"/>
+  <path class="edge" d="M150 280 H270"/>
+  <path class="edge" d="M490 280 H600"/>
+  <text class="label" x="195" y="130" text-anchor="middle">approved</text>
+  <text class="label" x="445" y="130" text-anchor="middle">delivered</text>
+  <text class="label" x="318" y="205" text-anchor="end">ordered</text>
+  <text class="label" x="556" y="216" text-anchor="start">received</text>
+  <text class="label" x="210" y="270" text-anchor="middle">billed</text>
+  <text class="label" x="545" y="270" text-anchor="middle">released</text>
+  <g>
+    <rect class="node n-req" x="0" y="110" width="150" height="60" rx="12"/>
+    <text class="title" x="75" y="137">Requisition</text>
+    <text class="sub" x="75" y="155">approval matrix</text>
+  </g>
+  <g>
+    <rect class="node n-po" x="240" y="110" width="160" height="60" rx="12"/>
+    <text class="title" x="320" y="137">Purchase order</text>
+    <text class="sub" x="320" y="155">from a sealed RFQ</text>
+  </g>
+  <g>
+    <rect class="node n-gr" x="490" y="110" width="160" height="60" rx="12"/>
+    <text class="title" x="570" y="137">Goods receipt</text>
+    <text class="sub" x="570" y="155">what arrived</text>
+  </g>
+  <g>
+    <rect class="node n-inv" x="0" y="250" width="150" height="60" rx="12"/>
+    <text class="title" x="75" y="277">Supplier invoice</text>
+    <text class="sub" x="75" y="295">UBL XML and QR</text>
+  </g>
+  <g>
+    <rect class="node n-match" x="270" y="250" width="220" height="60" rx="12"/>
+    <text class="title" x="380" y="277">Three-way match</text>
+    <text class="sub" x="380" y="295">order · receipt · invoice</text>
+  </g>
+  <g>
+    <rect class="node n-erp" x="600" y="250" width="150" height="60" rx="12"/>
+    <text class="title" x="675" y="277">ERP</text>
+    <text class="sub" x="675" y="295">pays from here</text>
+  </g>
+  <g class="badge ok b0">
+    <rect x="39.5" y="80" width="71" height="20" rx="10"/>
+    <text x="75" y="94">approved</text>
+  </g>
+  <g class="badge ok b1">
+    <rect x="284.5" y="80" width="71" height="20" rx="10"/>
+    <text x="320" y="94">10 units</text>
+  </g>
+  <g class="badge bad b2">
+    <rect x="508" y="80" width="124" height="20" rx="10"/>
+    <text x="570" y="94">8 of 10 received</text>
+  </g>
+  <g class="badge bad b3">
+    <rect x="16.5" y="220" width="117" height="20" rx="10"/>
+    <text x="75" y="234">10 units billed</text>
+  </g>
+  <g class="badge bad b4">
+    <rect x="315" y="220" width="130" height="20" rx="10"/>
+    <text x="380" y="234">on hold: quantity</text>
+  </g>
+  <g class="badge ok b5">
+    <rect x="505" y="80" width="130" height="20" rx="10"/>
+    <text x="570" y="94">10 of 10 received</text>
+  </g>
+  <g class="badge ok b6">
+    <rect x="348" y="220" width="64" height="20" rx="10"/>
+    <text x="380" y="234">matched</text>
+  </g>
+  <g class="badge ok b7">
+    <rect x="639.5" y="220" width="71" height="20" rx="10"/>
+    <text x="675" y="234">released</text>
+  </g>
+  <circle class="dot m0" r="7"/>
+  <circle class="dot m1" r="7"/>
+  <circle class="dot m2" r="7"/>
+  <circle class="dot m3" r="7"/>
+  <circle class="dot m4" r="7"/>
+  <circle class="dot m5" r="7"/>
+  <circle class="dot m6" r="7"/>
+  </g>
+  <text class="caption c0" x="480" y="346">A request passes the <tspan>approval matrix</tspan> and is bought from the best sealed quote.</text>
+  <text class="caption c1" x="480" y="346">Only 8 of 10 units arrive. The supplier bills <tspan>all 10</tspan>.</text>
+  <text class="caption c2" x="480" y="346">The three-way match compares all three and puts the invoice <tspan>on hold</tspan>.</text>
+  <text class="caption c3" x="480" y="346">The last 2 arrive, the match runs again <tspan>by itself</tspan>, and the ERP is told.</text>
+</svg>
